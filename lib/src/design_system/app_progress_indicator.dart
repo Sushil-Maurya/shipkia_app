@@ -1,7 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'app_platform.dart';
+import 'app_shipkia_loader.dart';
 
 class AppProgressIndicator extends StatelessWidget {
   const AppProgressIndicator({this.value, this.size = 20, super.key});
@@ -15,11 +14,6 @@ class AppProgressIndicator extends StatelessWidget {
       return LinearProgressIndicator(value: value);
     }
 
-    return AppPlatform.isCupertino
-        ? CupertinoActivityIndicator(radius: size / 2)
-        : SizedBox.square(
-            dimension: size,
-            child: const CircularProgressIndicator(strokeWidth: 2),
-          );
+    return AppShipKiaLoader(size: size * 2.4, showLabel: false);
   }
 }

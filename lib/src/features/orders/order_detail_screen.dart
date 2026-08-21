@@ -42,14 +42,9 @@ class OrderDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
-          Container(
+          AppCard(
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: ShipKiaColors.paper,
-              border: Border.all(color: ShipKiaColors.neutralBorder),
-              borderRadius: BorderRadius.circular(8),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -57,7 +52,7 @@ class OrderDetailScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        order.customer,
+                        'Order Details',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
@@ -65,13 +60,26 @@ class OrderDetailScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _DetailLine(label: 'AWB', value: order.awb),
-                _DetailLine(label: 'Courier', value: order.courier),
-                _DetailLine(label: 'Destination', value: order.city),
-                _DetailLine(
-                  label: 'Payment',
-                  value:
-                      '${order.paymentMode} - Rs ${order.amount.toStringAsFixed(0)}',
+                _DetailFieldGrid(
+                  fields: [
+                    _DetailFieldData(label: 'Customer', value: order.customer),
+                    _DetailFieldData(label: 'Order ID', value: order.id),
+                    _DetailFieldData(label: 'AWB', value: order.awb),
+                    _DetailFieldData(label: 'Courier', value: order.courier),
+                    _DetailFieldData(label: 'Destination', value: order.city),
+                    _DetailFieldData(
+                      label: 'Payment Mode',
+                      value: order.paymentMode,
+                    ),
+                    _DetailFieldData(
+                      label: 'Amount',
+                      value: 'Rs ${order.amount.toStringAsFixed(0)}',
+                    ),
+                    _DetailFieldData(
+                      label: 'Created At',
+                      value: _formatCreatedAt(order.createdAt),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -113,33 +121,53 @@ class OrderDetailScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _formatCreatedAt(DateTime value) {
+    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+    final minute = value.minute.toString().padLeft(2, '0');
+    final period = value.hour >= 12 ? 'PM' : 'AM';
+    return '${value.day} Aug ${value.year}, $hour:$minute $period';
+  }
 }
 
-class _DetailLine extends StatelessWidget {
-  const _DetailLine({required this.label, required this.value});
+class _DetailFieldData {
+  const _DetailFieldData({required this.label, required this.value});
 
   final String label;
   final String value;
+}
+
+class _DetailFieldGrid extends StatelessWidget {
+  const _DetailFieldGrid({required this.fields});
+
+  final List<_DetailFieldData> fields;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 92,
-            child: Text(
-              label.toUpperCase(),
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(color: ShipKiaColors.mutedInk),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 560;
+        final fieldWidth = isWide
+            ? (constraints.maxWidth - 12) / 2
+            : constraints.maxWidth;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: fields
+              .map(
+                (field) => SizedBox(
+                  width: fieldWidth,
+                  child: AppTextField(
+                    label: field.label,
+                    initialValue: field.value,
+                    readOnly: true,
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }

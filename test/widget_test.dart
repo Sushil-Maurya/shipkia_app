@@ -7,6 +7,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const ShipKiaApp());
+    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pumpAndSettle();
 
     expect(find.text('Login to ShipKia'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);

@@ -1,11 +1,11 @@
 {
-    "name": "shipkia_app",
-    "short_name": "shipkia_app",
+    "name": "ShipKia",
+    "short_name": "ShipKia",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#1351D8",
+    "description": "ShipKia shipping operations workspace.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
