@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/shipkia_mock_data.dart';
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
@@ -31,10 +32,11 @@ class NdrScreen extends StatelessWidget {
         const SkSectionHeader(title: 'NDR Actions'),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: FilledButton.icon(
+          child: AppButton(
+            label: 'Schedule reattempt',
+            icon: Icons.restart_alt,
             onPressed: () {},
-            icon: const Icon(Icons.restart_alt, size: 18),
-            label: const Text('Schedule reattempt'),
+            fullWidth: true,
           ),
         ),
       ],
@@ -55,25 +57,16 @@ class _MessageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Material(
-        color: ShipKiaColors.paper,
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(color: ShipKiaColors.neutralBorder),
-          borderRadius: BorderRadius.circular(8),
+    return AppCard(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: EdgeInsets.zero,
+      child: AppListTile(
+        leading: const Icon(
+          Icons.chat_bubble_outline,
+          color: ShipKiaColors.shipkiaBlue,
         ),
-        clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          dense: true,
-          leading: const Icon(
-            Icons.chat_bubble_outline,
-            color: ShipKiaColors.shipkiaBlue,
-          ),
-          title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-          subtitle: Text('$body\n$time'),
-          isThreeLine: true,
-        ),
+        title: title,
+        subtitle: '$body\n$time',
       ),
     );
   }

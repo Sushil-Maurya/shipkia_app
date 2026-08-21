@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../design_system/design_system.dart';
 import '../../shell/shipkia_shell.dart';
 import '../../theme/shipkia_colors.dart';
 
@@ -30,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
@@ -280,21 +281,13 @@ class _AuthFormColumn extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            TextButton(
+            AppButton(
+              label: 'Register Now',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const SignUpScreen()),
               ),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 28),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                foregroundColor: ShipKiaColors.shipkiaBlue,
-                textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              child: const Text('Register Now'),
+              variant: AppButtonVariant.ghost,
+              height: 28,
             ),
           ],
         ),
@@ -371,30 +364,23 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(
+            child: AppButton(
+              label: 'Forgot password?',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const ForgotPasswordScreen(),
                 ),
               ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-                minimumSize: const Size(0, 28),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                foregroundColor: ShipKiaColors.shipkiaBlue,
-                textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              child: const Text('Forgot password?'),
+              variant: AppButtonVariant.ghost,
+              height: 28,
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
+          AppButton(
+            label: 'Login',
+            onPressed: onLogin,
+            fullWidth: true,
             height: 40,
-            child: FilledButton(onPressed: onLogin, child: const Text('Login')),
           ),
         ],
       ),
@@ -433,15 +419,13 @@ class _AuthField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        SizedBox(
+        AppTextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          autofillHints: autofillHints,
+          hintText: hintText,
           height: 40,
-          child: TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            obscureText: obscureText,
-            autofillHints: autofillHints,
-            decoration: InputDecoration(hintText: hintText),
-          ),
         ),
       ],
     );
@@ -817,7 +801,7 @@ class _ReferenceAuthScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
@@ -1069,17 +1053,12 @@ class _OtpAuthStepState extends State<_OtpAuthStep> {
             for (final controller in _controllers) ...[
               SizedBox(
                 width: 42,
-                height: 48,
-                child: TextField(
+                child: AppTextField(
                   controller: controller,
                   textAlign: TextAlign.center,
                   maxLength: 1,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  decoration: const InputDecoration(counterText: ''),
+                  height: 48,
                 ),
               ),
               if (controller != _controllers.last) const SizedBox(width: 6),
@@ -1114,16 +1093,12 @@ class _FullAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
+    return AppButton(
+      label: label,
+      onPressed: onPressed,
+      icon: icon,
+      fullWidth: true,
       height: 40,
-      child: icon == null
-          ? FilledButton(onPressed: onPressed, child: Text(label))
-          : FilledButton.icon(
-              onPressed: onPressed,
-              icon: Icon(icon, size: 15),
-              label: Text(label),
-            ),
     );
   }
 }
@@ -1141,18 +1116,11 @@ class _SmallAuthLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
+    return AppButton(
+      label: label,
       onPressed: onPressed,
-      style: TextButton.styleFrom(
-        padding: EdgeInsets.zero,
-        minimumSize: const Size(0, 28),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: muted
-            ? ShipKiaColors.mutedInk
-            : ShipKiaColors.shipkiaBlue,
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-      ),
-      child: Text(label),
+      variant: muted ? AppButtonVariant.secondary : AppButtonVariant.ghost,
+      height: 28,
     );
   }
 }
@@ -1196,14 +1164,12 @@ class _BackAuthLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton.icon(
+    return AppButton(
+      label: label,
+      icon: Icons.arrow_back,
       onPressed: () => Navigator.of(context).pop(),
-      icon: const Icon(Icons.arrow_back, size: 14),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: ShipKiaColors.shipkiaBlue,
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-      ),
+      variant: AppButtonVariant.ghost,
+      height: 28,
     );
   }
 }

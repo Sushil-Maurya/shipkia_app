@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/shipkia_mock_data.dart';
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 import '../tracking/tracking_screen.dart';
@@ -13,28 +14,23 @@ class MoreScreen extends StatelessWidget {
     return ListView(
       children: [
         const SkSectionHeader(title: 'Modules'),
-        ListTile(
-          dense: true,
+        AppListTile(
           leading: const Icon(
             Icons.travel_explore,
             color: ShipKiaColors.shipkiaBlue,
           ),
-          title: Text(
-            'Tracking',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          subtitle: const Text('Public AWB or order lookup'),
+          title: 'Tracking',
+          subtitle: 'Public AWB or order lookup',
           trailing: const Icon(Icons.chevron_right, size: 18),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => const TrackingScreen()),
           ),
         ),
         for (final module in primaryModules)
-          ListTile(
-            dense: true,
+          AppListTile(
             leading: const Icon(Icons.apps_outlined),
-            title: Text(module, style: Theme.of(context).textTheme.titleMedium),
-            subtitle: Text(_moduleDescription(module)),
+            title: module,
+            subtitle: _moduleDescription(module),
             trailing: const Icon(Icons.chevron_right, size: 18),
             onTap: () {},
           ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/design_system.dart';
+
 import '../theme/shipkia_colors.dart';
 
 class ShipKiaTopBar extends StatelessWidget {
@@ -29,18 +31,10 @@ class ShipKiaTopBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
           child: Row(
             children: [
-              IconButton.outlined(
+              AppIconButton(
+                icon: Icons.menu,
                 onPressed: onOpenModules,
-                icon: const Icon(Icons.menu, size: 18),
                 tooltip: 'Open modules',
-                style: IconButton.styleFrom(
-                  fixedSize: const Size(34, 34),
-                  backgroundColor: ShipKiaColors.neutralMuted,
-                  foregroundColor: ShipKiaColors.ink,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -58,14 +52,14 @@ class ShipKiaTopBar extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
+              AppIconButton(
+                icon: Icons.search,
                 onPressed: () {},
-                icon: const Icon(Icons.search, size: 19),
                 tooltip: 'Search',
               ),
-              IconButton(
+              AppIconButton(
+                icon: Icons.notifications_none,
                 onPressed: () {},
-                icon: const Icon(Icons.notifications_none, size: 19),
                 tooltip: 'Alerts',
               ),
               ShipKiaUserProfileMenu(onSignOut: onSignOut),
@@ -97,15 +91,11 @@ class ShipKiaCommandBar extends StatelessWidget {
             Expanded(
               child: SizedBox(
                 height: 28,
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                    suffixIcon: const Icon(
-                      Icons.keyboard_command_key,
-                      size: 15,
-                    ),
-                  ),
+                child: AppTextField(
+                  hintText: hint,
+                  prefixIcon: Icons.search,
+                  suffix: const Icon(Icons.keyboard_command_key, size: 15),
+                  height: 28,
                 ),
               ),
             ),
@@ -266,14 +256,10 @@ class ShipKiaModuleDrawer extends StatelessWidget {
                 itemCount: modules.length,
                 itemBuilder: (context, index) {
                   final module = modules[index];
-                  return ListTile(
-                    dense: true,
+                  return AppListTile(
                     leading: Icon(module.$1, size: 20),
-                    title: Text(
-                      module.$2,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    subtitle: Text(module.$3),
+                    title: module.$2,
+                    subtitle: module.$3,
                     trailing: const Icon(Icons.chevron_right, size: 17),
                   );
                 },
@@ -304,10 +290,10 @@ class ShipKiaUserProfileMenu extends StatelessWidget {
       ),
       menuChildren: [_UserProfilePanel(onSignOut: onSignOut)],
       builder: (context, controller, child) {
-        return IconButton(
+        return AppIconButton(
+          icon: Icons.person_outline,
           onPressed: () =>
               controller.isOpen ? controller.close() : controller.open(),
-          icon: const Icon(Icons.person_outline, size: 19),
           tooltip: 'Open profile menu',
         );
       },
@@ -470,32 +456,20 @@ class _UserProfilePanel extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(
                 children: [
-                  TextButton.icon(
+                  AppButton(
+                    label: 'Sign out',
+                    icon: Icons.logout,
                     onPressed: onSignOut,
-                    icon: const Icon(Icons.logout, size: 14),
-                    label: const Text('Sign out'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: ShipKiaColors.destructive,
-                      padding: EdgeInsets.zero,
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
+                    variant: AppButtonVariant.destructive,
+                    height: 28,
                   ),
                   const Spacer(),
-                  TextButton.icon(
+                  AppButton(
+                    label: 'Privacy',
+                    icon: Icons.privacy_tip_outlined,
                     onPressed: () {},
-                    icon: const Icon(Icons.privacy_tip_outlined, size: 14),
-                    label: const Text('Privacy'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: ShipKiaColors.mutedInk,
-                      padding: EdgeInsets.zero,
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    variant: AppButtonVariant.ghost,
+                    height: 28,
                   ),
                 ],
               ),
@@ -544,17 +518,13 @@ class _ProfileMenuAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 36,
-      child: TextButton.icon(
+      child: AppButton(
+        label: label,
+        icon: icon,
         onPressed: () {},
-        icon: Icon(icon, size: 15),
-        label: Text(label),
-        style: TextButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          foregroundColor: ShipKiaColors.ink,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
+        variant: AppButtonVariant.ghost,
+        fullWidth: true,
+        height: 36,
       ),
     );
   }

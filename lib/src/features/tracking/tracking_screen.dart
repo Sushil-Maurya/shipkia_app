@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
@@ -8,22 +9,21 @@ class TrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tracking')),
+    return AppScaffold(
+      title: 'Tracking',
       body: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Enter AWB or order id',
-                prefixIcon: const Icon(Icons.travel_explore, size: 18),
-                suffixIcon: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.arrow_forward, size: 18),
-                  tooltip: 'Track',
-                ),
+            child: AppTextField(
+              hintText: 'Enter AWB or order id',
+              prefixIcon: Icons.travel_explore,
+              suffix: AppIconButton(
+                icon: Icons.arrow_forward,
+                onPressed: () {},
+                tooltip: 'Track',
+                size: 28,
               ),
             ),
           ),
@@ -46,10 +46,7 @@ class TrackingScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 const Text('Delhivery - In transit to Pune hub'),
                 const SizedBox(height: 12),
-                const LinearProgressIndicator(
-                  value: 0.62,
-                  color: ShipKiaColors.shipkiaBlue,
-                ),
+                const AppProgressIndicator(value: 0.62),
               ],
             ),
           ),
@@ -80,14 +77,13 @@ class _TrackingEvent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
+    return AppListTile(
       leading: const Icon(
         Icons.check_circle_outline,
         color: ShipKiaColors.success,
       ),
-      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text(meta),
+      title: title,
+      subtitle: meta,
     );
   }
 }

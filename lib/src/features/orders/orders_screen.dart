@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/shipkia_mock_data.dart';
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_shell_widgets.dart';
 import '../../widgets/shipkia_widgets.dart';
@@ -15,22 +16,19 @@ class OrdersScreen extends StatelessWidget {
       children: [
         ShipKiaCommandBar(
           hint: 'Search by order, AWB, customer',
-          trailing: FilledButton(
-            onPressed: () {},
-            child: const Icon(Icons.add, size: 18),
-          ),
+          trailing: AppButton(label: 'Add', icon: Icons.add, onPressed: () {}),
         ),
         SizedBox(
           height: 42,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             scrollDirection: Axis.horizontal,
-            children: const [
-              _FilterChip(label: 'All', selected: true),
-              _FilterChip(label: 'Ready'),
-              _FilterChip(label: 'In Transit'),
-              _FilterChip(label: 'NDR'),
-              _FilterChip(label: 'Delivered'),
+            children: [
+              AppChip(label: 'All', selected: true, onSelected: (_) {}),
+              AppChip(label: 'Ready', onSelected: (_) {}),
+              AppChip(label: 'In Transit', onSelected: (_) {}),
+              AppChip(label: 'NDR', onSelected: (_) {}),
+              AppChip(label: 'Delivered', onSelected: (_) {}),
             ],
           ),
         ),
@@ -44,10 +42,11 @@ class OrdersScreen extends StatelessWidget {
                     ?.copyWith(color: ShipKiaColors.mutedInk),
               ),
               const Spacer(),
-              OutlinedButton.icon(
+              AppButton(
+                label: 'Export',
+                icon: Icons.file_download_outlined,
                 onPressed: () {},
-                icon: const Icon(Icons.file_download_outlined, size: 15),
-                label: const Text('Export'),
+                variant: AppButtonVariant.secondary,
               ),
             ],
           ),
@@ -68,32 +67,6 @@ class OrdersScreen extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.label, this.selected = false});
-
-  final String label;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        selected: selected,
-        onSelected: (_) {},
-        label: Text(label),
-        selectedColor: ShipKiaColors.shipkiaBlue,
-        side: const BorderSide(color: ShipKiaColors.neutralBorder),
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : ShipKiaColors.ink,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
     );
   }
 }

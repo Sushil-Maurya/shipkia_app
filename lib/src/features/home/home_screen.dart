@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/shipkia_mock_data.dart';
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_shell_widgets.dart';
 import '../../widgets/shipkia_widgets.dart';
@@ -18,9 +19,9 @@ class HomeScreen extends StatelessWidget {
         children: [
           ShipKiaCommandBar(
             hint: 'Search orders, AWB, customers',
-            trailing: IconButton.outlined(
+            trailing: AppIconButton(
+              icon: Icons.tune,
               onPressed: () {},
-              icon: const Icon(Icons.tune, size: 18),
               tooltip: 'Filters',
             ),
           ),

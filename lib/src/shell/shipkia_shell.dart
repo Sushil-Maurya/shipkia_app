@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/design_system.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/home/home_screen.dart';
@@ -17,6 +18,7 @@ class ShipKiaShell extends StatefulWidget {
 }
 
 class _ShipKiaShellState extends State<ShipKiaShell> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   int _index = 0;
 
   static const _screens = [
@@ -51,7 +53,8 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
+      scaffoldKey: _scaffoldKey,
       drawer: const ShipKiaModuleDrawer(modules: _modules),
       body: Builder(
         builder: (context) => Column(
@@ -59,7 +62,7 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
             ShipKiaTopBar(
               title: _titles[_index].$1,
               subtitle: _titles[_index].$2,
-              onOpenModules: () => Scaffold.of(context).openDrawer(),
+              onOpenModules: () => _scaffoldKey.currentState?.openDrawer(),
               onSignOut: () => Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
                 (_) => false,

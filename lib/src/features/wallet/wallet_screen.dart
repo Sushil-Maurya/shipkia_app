@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
@@ -38,10 +39,11 @@ class WalletScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              FilledButton.tonalIcon(
+              AppButton(
+                label: 'Recharge wallet',
+                icon: Icons.add_card,
                 onPressed: () {},
-                icon: const Icon(Icons.add_card, size: 18),
-                label: const Text('Recharge wallet'),
+                variant: AppButtonVariant.secondary,
               ),
             ],
           ),
@@ -80,9 +82,8 @@ class _WalletRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      title: Text(label, style: Theme.of(context).textTheme.titleMedium),
+    return AppListTile(
+      title: label,
       trailing: Text(
         value,
         style: TextStyle(

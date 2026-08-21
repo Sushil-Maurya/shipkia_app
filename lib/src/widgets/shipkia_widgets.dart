@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/shipkia_mock_data.dart';
+import '../design_system/design_system.dart';
 import '../theme/shipkia_colors.dart';
 
 class SkSectionHeader extends StatelessWidget {
@@ -221,11 +222,11 @@ class SkOrderRow extends StatelessWidget {
                       label: order.paymentMode,
                       value: 'Rs ${order.amount.toStringAsFixed(0)}',
                     ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
+                    AppIconButton(
+                      icon: Icons.more_vert,
                       onPressed: () {},
-                      icon: const Icon(Icons.more_vert, size: 18),
                       tooltip: 'Row actions',
+                      size: 28,
                     ),
                   ],
                 ),

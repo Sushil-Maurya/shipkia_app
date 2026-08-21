@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/shipkia_mock_data.dart';
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
@@ -11,26 +12,27 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(order.id)),
+    return AppScaffold(
+      title: order.id,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: AppButton(
+                  label: 'Raise ticket',
+                  icon: Icons.support_agent,
                   onPressed: () {},
-                  icon: const Icon(Icons.support_agent, size: 18),
-                  label: const Text('Raise ticket'),
+                  variant: AppButtonVariant.secondary,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: FilledButton.icon(
+                child: AppButton(
+                  label: 'Ship now',
+                  icon: Icons.local_shipping_outlined,
                   onPressed: () {},
-                  icon: const Icon(Icons.local_shipping_outlined, size: 18),
-                  label: const Text('Ship now'),
                 ),
               ),
             ],
@@ -155,14 +157,13 @@ class _TimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
+    return AppListTile(
       leading: Icon(
         done ? Icons.check_circle : Icons.radio_button_unchecked,
         color: done ? ShipKiaColors.success : ShipKiaColors.mutedInk,
       ),
-      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text(meta),
+      title: title,
+      subtitle: meta,
     );
   }
 }
@@ -183,14 +184,11 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = danger ? ShipKiaColors.destructive : ShipKiaColors.ink;
-    return ListTile(
-      dense: true,
+    return AppListTile(
       onTap: onTap,
       leading: Icon(icon, color: color),
-      title: Text(
-        label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700),
-      ),
+      title: label,
+      destructive: danger,
       trailing: const Icon(Icons.chevron_right, size: 18),
     );
   }

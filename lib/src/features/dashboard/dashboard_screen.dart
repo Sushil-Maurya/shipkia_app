@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/shipkia_mock_data.dart';
+import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
@@ -78,22 +79,14 @@ class _AlertRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Material(
-        color: ShipKiaColors.paper,
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(color: ShipKiaColors.neutralBorder),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          dense: true,
-          leading: Icon(icon, color: ShipKiaColors.shipkiaBlue),
-          title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-          subtitle: Text(meta),
-          trailing: const Icon(Icons.chevron_right, size: 18),
-        ),
+    return AppCard(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: EdgeInsets.zero,
+      child: AppListTile(
+        leading: Icon(icon, color: ShipKiaColors.shipkiaBlue),
+        title: title,
+        subtitle: meta,
+        trailing: const Icon(Icons.chevron_right, size: 18),
       ),
     );
   }
@@ -107,11 +100,9 @@ class _TabPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      title: Text(label, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text(value),
+    return AppListTile(
+      title: label,
+      subtitle: value,
       trailing: const Icon(Icons.chevron_right, size: 18),
     );
   }
