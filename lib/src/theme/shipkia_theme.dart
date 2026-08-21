@@ -41,21 +41,23 @@ class ShipKiaTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: surface,
       fontFamily: 'Manrope',
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       textTheme: TextTheme(
         headlineMedium: TextStyle(
           color: text,
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: FontWeight.w800,
-          height: 1.15,
+          height: 1.2,
         ),
         titleLarge: TextStyle(
           color: text,
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
         ),
         titleMedium: TextStyle(
           color: text,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
         ),
         bodyMedium: TextStyle(color: text, fontSize: 12, height: 1.35),
@@ -81,9 +83,14 @@ class ShipKiaTheme {
         isDense: true,
         filled: true,
         fillColor: isDark ? ShipKiaColors.nightCard : ShipKiaColors.paper,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 34,
+          minHeight: 28,
+        ),
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 34,
+          minHeight: 28,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -100,14 +107,16 @@ class ShipKiaTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 38),
+          minimumSize: const Size(0, 28),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 38),
+          minimumSize: const Size(0, 28),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           side: BorderSide(color: border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
@@ -124,13 +133,13 @@ class ShipKiaTheme {
       ),
       dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
       navigationBarTheme: NavigationBarThemeData(
-        height: 64,
+        height: 58,
         backgroundColor: surface,
         indicatorColor: ShipKiaColors.shipkiaBlue,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => TextStyle(
             color: states.contains(WidgetState.selected)
-                ? ShipKiaColors.ink
+                ? ShipKiaColors.shipkiaBlue
                 : ShipKiaColors.mutedInk,
             fontSize: 10,
             fontWeight: FontWeight.w800,

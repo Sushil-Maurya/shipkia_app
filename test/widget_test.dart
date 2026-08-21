@@ -8,11 +8,11 @@ void main() {
   ) async {
     await tester.pumpWidget(const ShipKiaApp());
 
-    expect(find.text('ShipKia'), findsOneWidget);
-    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Login to ShipKia'), findsOneWidget);
+    expect(find.text('Login'), findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(2));
 
-    await tester.tap(find.text('Sign in'));
+    await tester.tap(find.text('Login'));
     await tester.pumpAndSettle();
 
     expect(find.text('Dispatch Console'), findsWidgets);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/more/more_screen.dart';
@@ -59,6 +60,10 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
               title: _titles[_index].$1,
               subtitle: _titles[_index].$2,
               onOpenModules: () => Scaffold.of(context).openDrawer(),
+              onSignOut: () => Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+                (_) => false,
+              ),
             ),
             Expanded(
               child: IndexedStack(index: _index, children: _screens),

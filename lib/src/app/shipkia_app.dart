@@ -13,6 +13,7 @@ class ShipKiaApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ShipKiaTheme.light,
       darkTheme: ShipKiaTheme.dark,
+      themeMode: ThemeMode.system,
       home: const LoginScreen(),
     );
   }
