@@ -32,9 +32,9 @@ class TrackingScreen extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: ShipKiaColors.paper,
-              border: Border.all(color: ShipKiaColors.neutralBorder),
-              borderRadius: BorderRadius.circular(8),
+              color: ShipKiaColors.surface(context),
+              border: Border.all(color: ShipKiaColors.border(context)),
+              borderRadius: ShipKiaRadius.mdBorder,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +46,16 @@ class TrackingScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 const Text('Delhivery - In transit to Pune hub'),
                 const SizedBox(height: 12),
-                const AppProgressIndicator(value: 0.62),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 0.62),
+                  duration: ShipKiaMotion.duration(
+                    context,
+                    ShipKiaMotion.emphasized,
+                  ),
+                  curve: ShipKiaMotion.standard,
+                  builder: (context, value, child) =>
+                      AppProgressIndicator(value: value),
+                ),
               ],
             ),
           ),

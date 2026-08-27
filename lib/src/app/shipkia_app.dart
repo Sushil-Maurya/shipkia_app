@@ -3,19 +3,42 @@ import 'package:flutter/material.dart';
 import '../design_system/design_system.dart';
 import '../features/auth/login_screen.dart';
 import '../theme/shipkia_theme.dart';
+import 'shipkia_theme_controller.dart';
 
-class ShipKiaApp extends StatelessWidget {
+class ShipKiaApp extends StatefulWidget {
   const ShipKiaApp({super.key});
 
   @override
+  State<ShipKiaApp> createState() => _ShipKiaAppState();
+}
+
+class _ShipKiaAppState extends State<ShipKiaApp> {
+  final _themeMode = ValueNotifier(ThemeMode.system);
+
+  @override
+  void dispose() {
+    _themeMode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ShipKia',
-      debugShowCheckedModeBanner: false,
-      theme: ShipKiaTheme.light,
-      darkTheme: ShipKiaTheme.dark,
-      themeMode: ThemeMode.system,
-      home: const _ShipKiaStartupGate(child: LoginScreen()),
+    return ShipKiaThemeController(
+      notifier: _themeMode,
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: _themeMode,
+        builder: (context, themeMode, child) {
+          return MaterialApp(
+            title: 'ShipKia',
+            debugShowCheckedModeBanner: false,
+            theme: ShipKiaTheme.light,
+            darkTheme: ShipKiaTheme.dark,
+            themeMode: themeMode,
+            home: child,
+          );
+        },
+        child: const _ShipKiaStartupGate(child: LoginScreen()),
+      ),
     );
   }
 }
@@ -39,16 +62,14 @@ class _ShipKiaStartupGateState extends State<_ShipKiaStartupGate> {
   }
 
   Future<void> _prepareAppContent() async {
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    await Future<void>.delayed(ShipKiaMotion.startup);
     if (mounted) setState(() => _ready = true);
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 280),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
+    return AppAnimatedSwitcher(
+      duration: ShipKiaMotion.emphasized,
       child: _ready
           ? widget.child
           : const AppLoadingScreen(

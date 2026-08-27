@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/shipkia_colors.dart';
 import 'app_platform.dart';
+import 'shipkia_tokens.dart';
 
 class AppIconButton extends StatelessWidget {
   const AppIconButton({
@@ -22,16 +23,18 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = filled ? ShipKiaColors.paper : ShipKiaColors.ink;
+    final foreground = filled
+        ? ShipKiaColors.paper
+        : ShipKiaColors.textPrimary(context);
     final background = filled
         ? ShipKiaColors.shipkiaBlue
-        : ShipKiaColors.neutralMuted;
+        : ShipKiaColors.surfaceMuted(context);
 
     if (AppPlatform.isCupertino) {
       return CupertinoButton(
         padding: EdgeInsets.zero,
         minimumSize: Size.square(size),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: ShipKiaRadius.mdBorder,
         color: background,
         onPressed: onPressed,
         child: Icon(icon, size: 18, color: foreground),
@@ -46,7 +49,7 @@ class AppIconButton extends StatelessWidget {
         fixedSize: Size(size, size),
         backgroundColor: background,
         foregroundColor: foreground,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
       ),
     );
   }

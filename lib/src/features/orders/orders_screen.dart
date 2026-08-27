@@ -52,19 +52,25 @@ class OrdersScreen extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: ListView(
-            children: [
-              for (final order in orders)
-                SkOrderRow(
-                  order: order,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => OrderDetailScreen(order: order),
-                    ),
-                  ),
+          child: orders.isEmpty
+              ? const AppEmptyState(
+                  title: 'No orders yet',
+                  message: 'Create or import orders and they will appear here with shipment status.',
+                  actionLabel: 'Create order',
+                )
+              : AppStaggeredList(
+                  children: [
+                    for (final order in orders)
+                      SkOrderRow(
+                        order: order,
+                        onTap: () => Navigator.of(context).push(
+                          shipKiaRoute<void>(
+                            builder: (_) => OrderDetailScreen(order: order),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
         ),
       ],
     );

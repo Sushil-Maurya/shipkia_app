@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/shipkia_colors.dart';
+import 'shipkia_tokens.dart';
 
 class AppChip extends StatelessWidget {
   const AppChip({
@@ -26,16 +27,18 @@ class AppChip extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: ShipKiaRadius.mdBorder,
         onTap: onSelected == null ? null : () => onSelected!(!selected),
-        child: DecoratedBox(
+        child: AnimatedContainer(
+          duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+          curve: ShipKiaMotion.standard,
           decoration: BoxDecoration(
             color: background,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: ShipKiaRadius.mdBorder,
             border: Border.all(
               color: selected
                   ? ShipKiaColors.shipkiaBlue
-                  : ShipKiaColors.neutralBorder,
+                  : ShipKiaColors.border(context),
             ),
           ),
           child: Padding(

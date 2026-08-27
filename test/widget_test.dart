@@ -20,4 +20,31 @@ void main() {
     expect(find.text('Dispatch Console'), findsWidgets);
     expect(find.text('Orders'), findsWidgets);
   });
+
+  testWidgets('profile menu theme toggle switches app brightness', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const ShipKiaApp());
+    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Login'));
+    await tester.pumpAndSettle();
+
+    expect(
+      Theme.of(tester.element(find.text('Dispatch Console').first)).brightness,
+      Brightness.light,
+    );
+
+    await tester.tap(find.byTooltip('Open profile menu'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(
+      Theme.of(tester.element(find.text('Dispatch Console').first)).brightness,
+      Brightness.dark,
+    );
+  });
 }

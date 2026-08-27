@@ -13,7 +13,12 @@ class SkSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        ShipKiaSpacing.page,
+        ShipKiaSpacing.lg,
+        ShipKiaSpacing.page,
+        ShipKiaSpacing.sm,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -31,13 +36,13 @@ class SkSetupChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = ShipKiaColors.shipkiaBlue;
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: ShipKiaColors.shipkiaBlue.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: ShipKiaColors.shipkiaBlue.withValues(alpha: 0.18),
-        ),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: ShipKiaRadius.smBorder,
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -71,23 +76,40 @@ class SkStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (status) {
       ShipmentStatus.readyToShip => ShipKiaColors.shipkiaBlue,
-      ShipmentStatus.inTransit => ShipKiaColors.warning,
+      ShipmentStatus.inTransit => ShipKiaColors.info,
       ShipmentStatus.delivered => ShipKiaColors.success,
       ShipmentStatus.ndr => ShipKiaColors.destructive,
       ShipmentStatus.cancelled => ShipKiaColors.mutedInk,
     };
+    final icon = switch (status) {
+      ShipmentStatus.readyToShip => Icons.inventory_2_outlined,
+      ShipmentStatus.inTransit => Icons.local_shipping_outlined,
+      ShipmentStatus.delivered => Icons.check_circle_outline,
+      ShipmentStatus.ndr => Icons.report_problem_outlined,
+      ShipmentStatus.cancelled => Icons.cancel_outlined,
+    };
 
-    return DecoratedBox(
+    return AnimatedContainer(
+      duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+      curve: ShipKiaMotion.standard,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: ShipKiaRadius.smBorder,
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-        child: Text(
-          statusLabel(status).toUpperCase(),
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: ShipKiaSpacing.xs),
+            Text(
+              statusLabel(status).toUpperCase(),
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: color, fontWeight: FontWeight.w900),
+            ),
+          ],
         ),
       ),
     );
@@ -101,24 +123,59 @@ class SkMetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _metricColor(metric.icon);
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: ShipKiaColors.paper,
-        border: Border.all(color: ShipKiaColors.neutralBorder),
-        borderRadius: BorderRadius.circular(8),
+        color: ShipKiaColors.surface(context),
+        border: Border.all(color: ShipKiaColors.border(context)),
+        borderRadius: ShipKiaRadius.mdBorder,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(ShipKiaSpacing.sm),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(metric.icon, size: 18, color: ShipKiaColors.shipkiaBlue),
-                const Spacer(),
-                Text(
-                  metric.delta,
-                  style: Theme.of(context).textTheme.labelSmall,
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: ShipKiaRadius.smBorder,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(metric.icon, size: 17, color: color),
+                  ),
+                ),
+                const SizedBox(width: ShipKiaSpacing.sm),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: ShipKiaColors.success.withValues(alpha: 0.10),
+                          borderRadius: ShipKiaRadius.pillBorder,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: ShipKiaSpacing.sm,
+                            vertical: ShipKiaSpacing.xs,
+                          ),
+                          child: Text(
+                            metric.delta,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: ShipKiaColors.success,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -139,6 +196,15 @@ class SkMetricTile extends StatelessWidget {
       ),
     );
   }
+
+  Color _metricColor(IconData icon) {
+    if (icon == Icons.report_problem_outlined) return ShipKiaColors.warning;
+    if (icon == Icons.check_circle_outline) return ShipKiaColors.success;
+    if (icon == Icons.account_balance_wallet_outlined) {
+      return ShipKiaColors.teal;
+    }
+    return ShipKiaColors.shipkiaBlue;
+  }
 }
 
 class SkOrderRow extends StatelessWidget {
@@ -151,88 +217,107 @@ class SkOrderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: ShipKiaColors.paper,
-          border: Border.all(color: ShipKiaColors.neutralBorder),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: ShipKiaColors.neutralMuted,
-                        borderRadius: BorderRadius.circular(7),
-                        border: Border.all(color: ShipKiaColors.neutralBorder),
-                      ),
-                      child: const Icon(
-                        Icons.inventory_2_outlined,
-                        color: ShipKiaColors.shipkiaBlue,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  order.id,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
-                                ),
-                              ),
-                              SkStatusBadge(status: order.status),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${order.customer} - ${order.city}',
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: ShipKiaColors.mutedInk),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        onTap: onTap,
+        child: Stack(
+          children: [
+            const Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 4,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: ShipKiaColors.shipkiaBlue,
+                  borderRadius: BorderRadius.horizontal(
+                    left: Radius.circular(ShipKiaRadius.md),
+                  ),
                 ),
-                const SizedBox(height: 9),
-                const Divider(),
-                const SizedBox(height: 7),
-                Row(
-                  children: [
-                    _Meta(label: 'AWB', value: order.awb),
-                    _Meta(label: 'Courier', value: order.courier),
-                    _Meta(
-                      label: order.paymentMode,
-                      value: 'Rs ${order.amount.toStringAsFixed(0)}',
-                    ),
-                    AppIconButton(
-                      icon: Icons.more_vert,
-                      onPressed: () {},
-                      tooltip: 'Row actions',
-                      size: 28,
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 9, 8, 9),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: ShipKiaColors.surfaceMuted(context),
+                          borderRadius: ShipKiaRadius.smBorder,
+                          border: Border.all(
+                            color: ShipKiaColors.border(context),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.inventory_2_outlined,
+                          color: ShipKiaColors.shipkiaBlue,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Hero(
+                                    tag: 'order-title-${order.id}',
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: Text(
+                                        order.id,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SkStatusBadge(status: order.status),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${order.customer} - ${order.city}',
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: ShipKiaColors.mutedInk),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  const Divider(),
+                  const SizedBox(height: 7),
+                  Row(
+                    children: [
+                      _Meta(label: 'AWB', value: order.awb),
+                      _Meta(label: 'Courier', value: order.courier),
+                      _Meta(
+                        label: order.paymentMode,
+                        value: 'Rs ${order.amount.toStringAsFixed(0)}',
+                      ),
+                      AppIconButton(
+                        icon: Icons.more_vert,
+                        onPressed: () {},
+                        tooltip: 'Row actions',
+                        size: 28,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

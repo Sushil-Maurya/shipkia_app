@@ -51,9 +51,30 @@ class OrderDetailScreen extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        'Order Details',
-                        style: Theme.of(context).textTheme.titleLarge,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Order Details',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: ShipKiaSpacing.xs),
+                          Hero(
+                            tag: 'order-title-${order.id}',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: Text(
+                                order.id,
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: ShipKiaColors.textSecondary(
+                                        context,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     SkStatusBadge(status: order.status),
@@ -89,6 +110,7 @@ class OrderDetailScreen extends StatelessWidget {
             title: 'Order created',
             meta: '17 Aug, 10:15 AM',
             done: true,
+            isFirst: true,
           ),
           const _TimelineItem(
             title: 'Courier allocation pending',
@@ -99,6 +121,7 @@ class OrderDetailScreen extends StatelessWidget {
             title: 'Pickup scheduled',
             meta: 'Awaiting action',
             done: false,
+            isLast: true,
           ),
           const SkSectionHeader(title: 'Actions'),
           _ActionTile(
@@ -177,21 +200,59 @@ class _TimelineItem extends StatelessWidget {
     required this.title,
     required this.meta,
     required this.done,
+    this.isFirst = false,
+    this.isLast = false,
   });
 
   final String title;
   final String meta;
   final bool done;
+  final bool isFirst;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
-    return AppListTile(
-      leading: Icon(
-        done ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: done ? ShipKiaColors.success : ShipKiaColors.mutedInk,
+    final color = done
+        ? ShipKiaColors.success
+        : ShipKiaColors.textSecondary(context);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: done ? 1 : 0.35),
+      duration: ShipKiaMotion.duration(context, ShipKiaMotion.normal),
+      curve: ShipKiaMotion.standard,
+      builder: (context, value, child) => AppListTile(
+        leading: SizedBox(
+          width: 28,
+          height: 44,
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  width: 2,
+                  color: isFirst
+                      ? Colors.transparent
+                      : color.withValues(alpha: 0.22 * value),
+                ),
+              ),
+              Icon(
+                done ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: color,
+                size: 20,
+              ),
+              Expanded(
+                child: Container(
+                  width: 2,
+                  color: isLast
+                      ? Colors.transparent
+                      : color.withValues(alpha: 0.22 * value),
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: title,
+        subtitle: meta,
       ),
-      title: title,
-      subtitle: meta,
     );
   }
 }
@@ -211,7 +272,9 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? ShipKiaColors.destructive : ShipKiaColors.ink;
+    final color = danger
+        ? ShipKiaColors.destructive
+        : ShipKiaColors.textPrimary(context);
     return AppListTile(
       onTap: onTap,
       leading: Icon(icon, color: color),

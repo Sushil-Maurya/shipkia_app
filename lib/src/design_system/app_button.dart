@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/shipkia_colors.dart';
 import 'app_platform.dart';
+import 'shipkia_tokens.dart';
 
 enum AppButtonVariant { primary, secondary, ghost, destructive }
 
@@ -14,6 +15,7 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.fullWidth = false,
     this.height = 40,
+    this.loading = false,
     super.key,
   });
 
@@ -23,17 +25,31 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final bool fullWidth;
   final double height;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     final foreground = _foregroundColor(context);
     final background = _backgroundColor(context);
     final border = _borderColor(context);
+    final effectiveOnPressed = loading ? null : onPressed;
     final child = Row(
       mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (icon != null) ...[Icon(icon, size: 15), const SizedBox(width: 6)],
+        if (loading) ...[
+          SizedBox.square(
+            dimension: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: foreground.withValues(alpha: 0.9),
+            ),
+          ),
+          const SizedBox(width: ShipKiaSpacing.sm),
+        ] else if (icon != null) ...[
+          Icon(icon, size: 15),
+          const SizedBox(width: 6),
+        ],
         Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
       ],
     );
@@ -44,10 +60,10 @@ class AppButton extends StatelessWidget {
         height: height,
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: ShipKiaRadius.mdBorder,
           color: variant == AppButtonVariant.ghost ? null : background,
           disabledColor: ShipKiaColors.neutralMuted,
-          onPressed: onPressed,
+          onPressed: effectiveOnPressed,
           child: IconTheme(
             data: IconThemeData(color: foreground, size: 15),
             child: DefaultTextStyle(
@@ -73,7 +89,7 @@ class AppButton extends StatelessWidget {
       side: WidgetStateProperty.all(BorderSide(color: border)),
       elevation: WidgetStateProperty.all(0),
       shape: WidgetStateProperty.all(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
       ),
       textStyle: WidgetStateProperty.all(
         const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
@@ -83,7 +99,14 @@ class AppButton extends StatelessWidget {
     return SizedBox(
       width: fullWidth ? double.infinity : null,
       height: height,
-      child: TextButton(onPressed: onPressed, style: style, child: child),
+      child: TextButton(
+        onPressed: effectiveOnPressed,
+        style: style,
+        child: AnimatedSwitcher(
+          duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+          child: child,
+        ),
+      ),
     );
   }
 

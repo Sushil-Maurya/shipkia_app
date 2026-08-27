@@ -16,7 +16,7 @@ class WalletScreen extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: ShipKiaColors.shipkiaBlue,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: ShipKiaRadius.mdBorder,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +87,9 @@ class _WalletRow extends StatelessWidget {
       trailing: Text(
         value,
         style: TextStyle(
-          color: positive ? ShipKiaColors.success : ShipKiaColors.ink,
+          color: positive
+              ? ShipKiaColors.success
+              : ShipKiaColors.textPrimary(context),
           fontSize: 13,
           fontWeight: FontWeight.w800,
         ),

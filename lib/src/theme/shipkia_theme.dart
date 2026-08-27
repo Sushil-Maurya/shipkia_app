@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../design_system/shipkia_tokens.dart';
 import 'shipkia_colors.dart';
 
 class ShipKiaTheme {
@@ -40,33 +41,10 @@ class ShipKiaTheme {
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: surface,
-      fontFamily: 'Manrope',
+      fontFamily: ShipKiaTypography.fontFamily,
       visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      textTheme: TextTheme(
-        headlineMedium: TextStyle(
-          color: text,
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          height: 1.2,
-        ),
-        titleLarge: TextStyle(
-          color: text,
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-        ),
-        titleMedium: TextStyle(
-          color: text,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-        bodyMedium: TextStyle(color: text, fontSize: 12, height: 1.35),
-        labelSmall: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
-        ),
-      ),
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      textTheme: ShipKiaTypography.textTheme(text),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
@@ -83,7 +61,10 @@ class ShipKiaTheme {
         isDense: true,
         filled: true,
         fillColor: isDark ? ShipKiaColors.nightCard : ShipKiaColors.paper,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: ShipKiaSpacing.md,
+          vertical: ShipKiaSpacing.sm,
+        ),
         prefixIconConstraints: const BoxConstraints(
           minWidth: 34,
           minHeight: 28,
@@ -93,32 +74,32 @@ class ShipKiaTheme {
           minHeight: 28,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: ShipKiaRadius.mdBorder,
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: ShipKiaRadius.mdBorder,
           borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: ShipKiaRadius.mdBorder,
           borderSide: const BorderSide(color: ShipKiaColors.shipkiaBlue),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 28),
+          minimumSize: const Size(0, 40),
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 28),
+          minimumSize: const Size(0, 40),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           side: BorderSide(color: border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
         ),
       ),
@@ -127,11 +108,30 @@ class ShipKiaTheme {
         color: isDark ? ShipKiaColors.nightCard : ShipKiaColors.paper,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: ShipKiaRadius.lgBorder,
           side: BorderSide(color: border),
         ),
       ),
       dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: isDark ? ShipKiaColors.nightCard : ShipKiaColors.paper,
+        modalBackgroundColor: isDark
+            ? ShipKiaColors.nightCard
+            : ShipKiaColors.paper,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(ShipKiaRadius.lg),
+          ),
+          side: BorderSide(color: border),
+        ),
+        showDragHandle: true,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? ShipKiaColors.nightCard : ShipKiaColors.paper,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.lgBorder),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         height: 58,
         backgroundColor: surface,

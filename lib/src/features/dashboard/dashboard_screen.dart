@@ -13,20 +13,46 @@ class DashboardScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 16),
       children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: GridView.builder(
-            itemCount: metrics.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.48,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemBuilder: (_, index) => SkMetricTile(metric: metrics[index]),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = ShipKiaBreakpoints.dashboardColumns(
+              constraints.maxWidth,
+            );
+
+            return Padding(
+              padding: const EdgeInsets.all(ShipKiaSpacing.md),
+              child: GridView.builder(
+                itemCount: metrics.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  childAspectRatio: columns > 2 ? 1.7 : 1.48,
+                  crossAxisSpacing: ShipKiaSpacing.sm,
+                  mainAxisSpacing: ShipKiaSpacing.sm,
+                ),
+                itemBuilder: (_, index) => TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration:
+                      ShipKiaMotion.normal + Duration(milliseconds: index * 35),
+                  curve: ShipKiaMotion.standard,
+                  builder: (context, value, child) => Opacity(
+                    opacity: ShipKiaMotion.reduceMotion(context) ? 1 : value,
+                    child: Transform.translate(
+                      offset: Offset(
+                        0,
+                        ShipKiaMotion.reduceMotion(context)
+                            ? 0
+                            : 8 * (1 - value),
+                      ),
+                      child: child,
+                    ),
+                  ),
+                  child: SkMetricTile(metric: metrics[index]),
+                ),
+              ),
+            );
+          },
         ),
         const SkSectionHeader(title: 'Operational Alerts'),
         const _AlertRow(

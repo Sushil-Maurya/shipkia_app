@@ -24,9 +24,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const ShipKiaShell()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(shipKiaRoute<void>(builder: (_) => const ShipKiaShell()));
   }
 
   @override
@@ -284,7 +284,10 @@ class _AuthFormColumn extends StatelessWidget {
             AppButton(
               label: 'Register Now',
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SignUpScreen()),
+                shipKiaRoute<void>(
+                  builder: (_) => const SignUpScreen(),
+                  transition: ShipKiaRouteTransition.modal,
+                ),
               ),
               variant: AppButtonVariant.ghost,
               height: 28,
@@ -367,8 +370,9 @@ class _LoginForm extends StatelessWidget {
             child: AppButton(
               label: 'Forgot password?',
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
+                shipKiaRoute<void>(
                   builder: (_) => const ForgotPasswordScreen(),
+                  transition: ShipKiaRouteTransition.modal,
                 ),
               ),
               variant: AppButtonVariant.ghost,
@@ -501,8 +505,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               onAction: () => Navigator.of(context).pop(),
               secondaryActionLabel: 'Open update password',
               onSecondaryAction: () => Navigator.of(context).pushReplacement(
-                MaterialPageRoute<void>(
+                shipKiaRoute<void>(
                   builder: (_) => const UpdatePasswordScreen(),
+                  transition: ShipKiaRouteTransition.modal,
                 ),
               ),
             )
@@ -638,7 +643,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               onAction: () => Navigator.of(context).pop(),
             ),
       child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
+        duration: ShipKiaMotion.normal,
         child: switch (_step) {
           1 => _ReferenceAuthForm(
             key: const ValueKey('email'),
@@ -717,7 +722,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 label: 'Register',
                 icon: Icons.send_outlined,
                 onPressed: () => Navigator.of(context).pushReplacement(
-                  MaterialPageRoute<void>(
+                  shipKiaRoute<void>(
                     builder: (_) => RegisterVerifyScreen(
                       email: _emailController.text.trim().isEmpty
                           ? 'user@example.com'
@@ -763,7 +768,7 @@ class _RegisterVerifyScreenState extends State<RegisterVerifyScreen> {
               description: 'Your account is registered. Opening login...',
               actionLabel: 'Go to Login',
               onAction: () => Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+                shipKiaRoute<void>(builder: (_) => const LoginScreen()),
                 (_) => false,
               ),
             )
@@ -1262,9 +1267,9 @@ class _StaticAuthField extends StatelessWidget {
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: ShipKiaColors.neutralMuted,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: ShipKiaColors.neutralBorder),
+            color: ShipKiaColors.surfaceMuted(context),
+            borderRadius: ShipKiaRadius.mdBorder,
+            border: Border.all(color: ShipKiaColors.border(context)),
           ),
           child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
         ),
