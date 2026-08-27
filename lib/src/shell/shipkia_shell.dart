@@ -64,12 +64,17 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
               subtitle: _titles[_index].$2,
               onOpenModules: () => _scaffoldKey.currentState?.openDrawer(),
               onSignOut: () => Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+                shipKiaRoute<void>(builder: (_) => const LoginScreen()),
                 (_) => false,
               ),
             ),
             Expanded(
-              child: IndexedStack(index: _index, children: _screens),
+              child: AppAnimatedSwitcher(
+                child: KeyedSubtree(
+                  key: ValueKey(_index),
+                  child: _screens[_index],
+                ),
+              ),
             ),
           ],
         ),

@@ -22,9 +22,8 @@ class MoreScreen extends StatelessWidget {
           title: 'Tracking',
           subtitle: 'Public AWB or order lookup',
           trailing: const Icon(Icons.chevron_right, size: 18),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const TrackingScreen()),
-          ),
+          onTap: () => Navigator.of(context)
+              .push(shipKiaRoute<void>(builder: (_) => const TrackingScreen())),
         ),
         for (final module in primaryModules)
           AppListTile(

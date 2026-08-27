@@ -13,15 +13,17 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () async =>
-          Future<void>.delayed(const Duration(milliseconds: 450)),
+      onRefresh: () async => Future<void>.delayed(ShipKiaMotion.refresh),
       child: ListView(
         children: [
           ShipKiaCommandBar(
             hint: 'Search orders, AWB, customers',
             trailing: AppIconButton(
               icon: Icons.tune,
-              onPressed: () {},
+              onPressed: () => showAppBottomSheet<void>(
+                context: context,
+                builder: (_) => const _HomeFiltersSheet(),
+              ),
               tooltip: 'Filters',
             ),
           ),
@@ -64,11 +66,92 @@ class HomeScreen extends StatelessWidget {
             SkOrderRow(
               order: order,
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
+                shipKiaRoute<void>(
                   builder: (_) => OrderDetailScreen(order: order),
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeFiltersSheet extends StatelessWidget {
+  const _HomeFiltersSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        ShipKiaSpacing.lg,
+        0,
+        ShipKiaSpacing.lg,
+        ShipKiaSpacing.lg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Filters (3)',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              AppIconButton(
+                icon: Icons.close,
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: 'Close filters',
+              ),
+            ],
+          ),
+          const SizedBox(height: ShipKiaSpacing.md),
+          Text(
+            'Shipment Status',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          const SizedBox(height: ShipKiaSpacing.sm),
+          Wrap(
+            children: [
+              AppChip(label: 'Ready', selected: true, onSelected: (_) {}),
+              AppChip(label: 'In Transit', selected: true, onSelected: (_) {}),
+              AppChip(label: 'NDR', onSelected: (_) {}),
+              AppChip(label: 'Delivered', onSelected: (_) {}),
+            ],
+          ),
+          const SizedBox(height: ShipKiaSpacing.lg),
+          Text('Courier', style: Theme.of(context).textTheme.labelSmall),
+          const SizedBox(height: ShipKiaSpacing.sm),
+          Wrap(
+            children: [
+              AppChip(label: 'Delhivery', selected: true, onSelected: (_) {}),
+              AppChip(label: 'Blue Dart', onSelected: (_) {}),
+              AppChip(label: 'Xpressbees', onSelected: (_) {}),
+            ],
+          ),
+          const SizedBox(height: ShipKiaSpacing.xl),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'Clear',
+                  onPressed: () {},
+                  variant: AppButtonVariant.secondary,
+                ),
+              ),
+              const SizedBox(width: ShipKiaSpacing.sm),
+              Expanded(
+                child: AppButton(
+                  label: 'Apply filters',
+                  icon: Icons.check,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

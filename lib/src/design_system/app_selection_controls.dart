@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/shipkia_colors.dart';
 import 'app_platform.dart';
+import 'shipkia_tokens.dart';
 
 class AppSwitch extends StatelessWidget {
   const AppSwitch({required this.value, required this.onChanged, super.key});
@@ -63,7 +64,8 @@ class AppRadio<T> extends StatelessWidget {
         dimension: 28,
         child: Center(
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
+            duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+            curve: ShipKiaMotion.standard,
             width: 18,
             height: 18,
             decoration: BoxDecoration(
@@ -71,7 +73,7 @@ class AppRadio<T> extends StatelessWidget {
               border: Border.all(
                 color: selected
                     ? ShipKiaColors.shipkiaBlue
-                    : ShipKiaColors.neutralBorder,
+                    : ShipKiaColors.border(context),
                 width: selected ? 5 : 1,
               ),
             ),

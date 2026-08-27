@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/shipkia_colors.dart';
 import 'app_platform.dart';
+import 'shipkia_tokens.dart';
 
 class AppTextField extends StatefulWidget {
   const AppTextField({
@@ -117,7 +118,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 color: widget.enabled
                     ? Theme.of(context).colorScheme.surface
                     : _disabledFill(context),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: ShipKiaRadius.mdBorder,
                 border: Border.all(color: _borderColor(context)),
               ),
             )

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/shipkia_colors.dart';
+import 'shipkia_tokens.dart';
 
 class AppShipKiaLoader extends StatefulWidget {
   const AppShipKiaLoader({
@@ -124,7 +125,7 @@ class _AppShipKiaLoaderState extends State<AppShipKiaLoader>
             ),
             const SizedBox(height: 4),
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 260),
+              duration: ShipKiaMotion.duration(context, ShipKiaMotion.normal),
               switchInCurve: Curves.easeOutCubic,
               switchOutCurve: Curves.easeInCubic,
               child: Text(

@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../theme/shipkia_colors.dart';
+import 'app_button.dart';
 import 'app_platform.dart';
+import 'shipkia_tokens.dart';
 
 class AppDialogAction {
   const AppDialogAction({
@@ -25,6 +28,7 @@ Future<T?> showAppDialog<T>({
 }) {
   return showDialog<T>(
     context: context,
+    barrierDismissible: false,
     builder: (context) {
       if (AppPlatform.isCupertino) {
         return CupertinoAlertDialog(
@@ -45,10 +49,29 @@ Future<T?> showAppDialog<T>({
       return AlertDialog(
         title: Text(title),
         content: Text(message),
+        contentTextStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: ShipKiaColors.textSecondary(context),
+          height: 1.5,
+        ),
         actions: [
           for (final action in actions)
-            TextButton(onPressed: action.onPressed, child: Text(action.label)),
+            AppButton(
+              label: action.label,
+              onPressed: action.onPressed,
+              variant: action.isDestructive
+                  ? AppButtonVariant.destructive
+                  : action.isDefault
+                  ? AppButtonVariant.primary
+                  : AppButtonVariant.ghost,
+              height: 36,
+            ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(
+          ShipKiaSpacing.lg,
+          0,
+          ShipKiaSpacing.lg,
+          ShipKiaSpacing.lg,
+        ),
       );
     },
   );

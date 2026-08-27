@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../app/shipkia_theme_controller.dart';
 import '../design_system/design_system.dart';
-
 import '../theme/shipkia_colors.dart';
 
 class ShipKiaTopBar extends StatelessWidget {
@@ -20,10 +20,15 @@ class ShipKiaTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showSyncPill = MediaQuery.sizeOf(context).width >= 430;
+
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: ShipKiaColors.paper,
-        border: Border(bottom: BorderSide(color: ShipKiaColors.neutralBorder)),
+      decoration: BoxDecoration(
+        color: ShipKiaColors.surface(context),
+        border: Border(
+          bottom: BorderSide(color: ShipKiaColors.border(context)),
+        ),
+        boxShadow: ShipKiaElevation.raised,
       ),
       child: SafeArea(
         bottom: false,
@@ -62,6 +67,11 @@ class ShipKiaTopBar extends StatelessWidget {
                 onPressed: () {},
                 tooltip: 'Alerts',
               ),
+              if (showSyncPill) ...[
+                const SizedBox(width: ShipKiaSpacing.xs),
+                const _SyncStatusPill(),
+                const SizedBox(width: ShipKiaSpacing.xs),
+              ],
               ShipKiaUserProfileMenu(onSignOut: onSignOut),
             ],
           ),
@@ -80,9 +90,11 @@ class ShipKiaCommandBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: ShipKiaColors.neutralMuted,
-        border: Border(bottom: BorderSide(color: ShipKiaColors.neutralBorder)),
+      decoration: BoxDecoration(
+        color: ShipKiaColors.surfaceMuted(context),
+        border: Border(
+          bottom: BorderSide(color: ShipKiaColors.border(context)),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -129,9 +141,9 @@ class ShipKiaBottomNav extends StatelessWidget {
     ];
 
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: ShipKiaColors.paper,
-        border: Border(top: BorderSide(color: ShipKiaColors.neutralBorder)),
+      decoration: BoxDecoration(
+        color: ShipKiaColors.surface(context),
+        border: Border(top: BorderSide(color: ShipKiaColors.border(context))),
       ),
       child: SafeArea(
         top: false,
@@ -179,10 +191,12 @@ class _BottomNavItem extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          DecoratedBox(
+          AnimatedContainer(
+            duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+            curve: ShipKiaMotion.standard,
             decoration: BoxDecoration(
               color: selected ? ShipKiaColors.shipkiaBlue : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: ShipKiaRadius.mdBorder,
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -233,11 +247,11 @@ class ShipKiaModuleDrawer extends StatelessWidget {
                     height: 34,
                     decoration: BoxDecoration(
                       color: ShipKiaColors.shipkiaBlue,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: ShipKiaRadius.mdBorder,
                     ),
                     child: const Icon(
                       Icons.local_shipping,
-                      color: Colors.white,
+                      color: ShipKiaColors.paper,
                       size: 19,
                     ),
                   ),
@@ -285,7 +299,7 @@ class ShipKiaUserProfileMenu extends StatelessWidget {
         backgroundColor: WidgetStateProperty.all(Colors.transparent),
         elevation: WidgetStateProperty.all(0),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          RoundedRectangleBorder(borderRadius: ShipKiaRadius.lgBorder),
         ),
       ),
       menuChildren: [_UserProfilePanel(onSignOut: onSignOut)],
@@ -311,100 +325,111 @@ class _UserProfilePanel extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        width: 310,
-        constraints: const BoxConstraints(maxWidth: 310),
+        width: 332,
+        constraints: const BoxConstraints(maxWidth: 332),
         decoration: BoxDecoration(
-          color: ShipKiaColors.paper.withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: ShipKiaColors.neutralBorder),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x26000000),
-              blurRadius: 60,
-              offset: Offset(0, 18),
-            ),
-          ],
+          color: ShipKiaColors.surface(context),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: ShipKiaColors.border(context)),
+          boxShadow: ShipKiaElevation.overlay,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(height: 4, color: ShipKiaColors.shipkiaBlue),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: ShipKiaColors.shipkiaBlue.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: ShipKiaColors.shipkiaBlue.withValues(
-                          alpha: 0.25,
+            DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [ShipKiaColors.shipkiaBlue, ShipKiaColors.teal],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: ShipKiaColors.paper.withValues(alpha: 0.18),
+                        borderRadius: ShipKiaRadius.lgBorder,
+                        border: Border.all(
+                          color: ShipKiaColors.paper.withValues(alpha: 0.35),
                         ),
                       ),
-                    ),
-                    child: Text(
-                      'OS',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: ShipKiaColors.shipkiaBlue,
-                        fontWeight: FontWeight.w900,
+                      child: Text(
+                        'OS',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: ShipKiaColors.paper,
+                              fontWeight: FontWeight.w900,
+                            ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Ops Supervisor',
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w900),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Ops Supervisor',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: ShipKiaColors.paper,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                ),
                               ),
-                            ),
-                            _ProfilePill(label: 'ADMIN'),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'ops@shipkia.com',
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: ShipKiaColors.mutedInk,
-                                fontWeight: FontWeight.w600,
+                              const _ProfilePill(label: 'ADMIN'),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'ops@shipkia.com',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: ShipKiaColors.paper.withValues(
+                                    alpha: 0.82,
+                                  ),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.business_outlined,
+                                size: 12,
+                                color: ShipKiaColors.paper,
                               ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.business_outlined,
-                              size: 12,
-                              color: ShipKiaColors.mutedInk,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'SHIPKIA-DEMO',
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(color: ShipKiaColors.mutedInk),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 4),
+                              Text(
+                                'SHIPKIA-DEMO',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: ShipKiaColors.paper.withValues(
+                                        alpha: 0.78,
+                                      ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            const Divider(),
+            const SizedBox(height: ShipKiaSpacing.sm),
             _ProfileMenuAction(
               icon: Icons.group_outlined,
               label: 'Manage users',
@@ -414,33 +439,16 @@ class _UserProfilePanel extends StatelessWidget {
               label: 'Account settings',
             ),
             const Divider(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Text(
-                    'THEME',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: ShipKiaColors.mutedInk,
-                      letterSpacing: 1.6,
-                    ),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.light_mode_outlined, size: 16),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.dark_mode_outlined, size: 16),
-                ],
-              ),
-            ),
+            const _ThemeModeToggle(),
             const Divider(),
             Container(
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: ShipKiaColors.neutralMuted,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: ShipKiaColors.neutralBorder),
+                color: ShipKiaColors.surfaceMuted(context),
+                borderRadius: ShipKiaRadius.mdBorder,
+                border: Border.all(color: ShipKiaColors.border(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,7 +467,26 @@ class _UserProfilePanel extends StatelessWidget {
                   AppButton(
                     label: 'Sign out',
                     icon: Icons.logout,
-                    onPressed: onSignOut,
+                    onPressed: () => showAppDialog<void>(
+                      context: context,
+                      title: 'Sign out?',
+                      message: 'You will return to the ShipKia login screen. Unsynced local changes should finish before signing out.',
+                      actions: [
+                        AppDialogAction(
+                          label: 'Cancel',
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        AppDialogAction(
+                          label: 'Sign out',
+                          isDestructive: true,
+                          isDefault: true,
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            onSignOut();
+                          },
+                        ),
+                      ],
+                    ),
                     variant: AppButtonVariant.destructive,
                     height: 28,
                   ),
@@ -481,6 +508,111 @@ class _UserProfilePanel extends StatelessWidget {
   }
 }
 
+class _SyncStatusPill extends StatelessWidget {
+  const _SyncStatusPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: ShipKiaColors.success.withValues(alpha: 0.10),
+        borderRadius: ShipKiaRadius.pillBorder,
+        border: Border.all(color: ShipKiaColors.success.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: ShipKiaSpacing.sm,
+          vertical: ShipKiaSpacing.xs,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_done_outlined,
+              size: 13,
+              color: ShipKiaColors.success,
+            ),
+            const SizedBox(width: ShipKiaSpacing.xs),
+            Text(
+              'Synced',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: ShipKiaColors.success,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeModeToggle extends StatelessWidget {
+  const _ThemeModeToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    final mode = ShipKiaThemeController.modeOf(context);
+    final enabled =
+        mode == ThemeMode.dark ||
+        (mode == ThemeMode.system &&
+            Theme.of(context).brightness == Brightness.dark);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ShipKiaSpacing.md,
+        vertical: 3,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          height: 44,
+          decoration: BoxDecoration(
+            color: ShipKiaColors.surfaceMuted(context),
+            borderRadius: ShipKiaRadius.lgBorder,
+            border: Border.all(color: ShipKiaColors.border(context)),
+          ),
+          child: InkWell(
+            borderRadius: ShipKiaRadius.lgBorder,
+            onTap: () => ShipKiaThemeController.setMode(
+              context,
+              enabled ? ThemeMode.light : ThemeMode.dark,
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: ShipKiaSpacing.md),
+                Icon(
+                  enabled
+                      ? Icons.dark_mode_outlined
+                      : Icons.light_mode_outlined,
+                  size: 18,
+                  color: ShipKiaColors.shipkiaBlue,
+                ),
+                const SizedBox(width: ShipKiaSpacing.md),
+                Expanded(
+                  child: Text(
+                    'Theme',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                AppSwitch(
+                  value: enabled,
+                  onChanged: (value) => ShipKiaThemeController.setMode(
+                    context,
+                    value ? ThemeMode.dark : ThemeMode.light,
+                  ),
+                ),
+                const SizedBox(width: ShipKiaSpacing.sm),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfilePill extends StatelessWidget {
   const _ProfilePill({required this.label});
 
@@ -490,18 +622,19 @@ class _ProfilePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: ShipKiaColors.shipkiaBlue.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: ShipKiaColors.shipkiaBlue.withValues(alpha: 0.20),
-        ),
+        color: ShipKiaColors.paper.withValues(alpha: 0.18),
+        borderRadius: ShipKiaRadius.pillBorder,
+        border: Border.all(color: ShipKiaColors.paper.withValues(alpha: 0.28)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         child: Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall
-              ?.copyWith(color: ShipKiaColors.shipkiaBlue, fontSize: 9),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: ShipKiaColors.paper,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
     );
@@ -516,15 +649,51 @@ class _ProfileMenuAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: AppButton(
-        label: label,
-        icon: icon,
-        onPressed: () {},
-        variant: AppButtonVariant.ghost,
-        fullWidth: true,
-        height: 36,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ShipKiaSpacing.md,
+        vertical: 3,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: ShipKiaRadius.lgBorder,
+          onTap: () {},
+          child: Ink(
+            height: 44,
+            decoration: BoxDecoration(
+              color: ShipKiaColors.surfaceMuted(context),
+              borderRadius: ShipKiaRadius.lgBorder,
+              border: Border.all(color: ShipKiaColors.border(context)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.zero,
+              child: Row(
+                children: [
+                  const SizedBox(width: ShipKiaSpacing.md),
+                  Icon(icon, size: 18, color: ShipKiaColors.shipkiaBlue),
+                  const SizedBox(width: ShipKiaSpacing.md),
+                  Expanded(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: ShipKiaColors.textPrimary(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: ShipKiaColors.textSecondary(context),
+                  ),
+                  const SizedBox(width: ShipKiaSpacing.sm),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
