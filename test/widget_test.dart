@@ -21,7 +21,7 @@ void main() {
     expect(find.text('Orders'), findsWidgets);
   });
 
-  testWidgets('profile menu theme toggle switches app brightness', (
+  testWidgets('account page theme toggle switches app brightness', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const ShipKiaApp());
@@ -36,14 +36,18 @@ void main() {
       Brightness.light,
     );
 
-    await tester.tap(find.byTooltip('Open profile menu'));
+    await tester.tap(find.byTooltip('Open account'));
     await tester.pumpAndSettle();
+
+    expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Manage users'), findsOneWidget);
+    expect(find.text('Account settings'), findsOneWidget);
 
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
     expect(
-      Theme.of(tester.element(find.text('Dispatch Console').first)).brightness,
+      Theme.of(tester.element(find.text('Account').first)).brightness,
       Brightness.dark,
     );
   });

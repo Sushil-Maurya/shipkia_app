@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design_system/design_system.dart';
+import '../features/account/account_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/home/home_screen.dart';
@@ -63,9 +64,10 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
               title: _titles[_index].$1,
               subtitle: _titles[_index].$2,
               onOpenModules: () => _scaffoldKey.currentState?.openDrawer(),
-              onSignOut: () => Navigator.of(context).pushAndRemoveUntil(
-                shipKiaRoute<void>(builder: (_) => const LoginScreen()),
-                (_) => false,
+              onOpenProfile: () => Navigator.of(context).push(
+                shipKiaRoute<void>(
+                  builder: (_) => AccountScreen(onSignOut: _signOut),
+                ),
               ),
             ),
             Expanded(
@@ -83,6 +85,13 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
         selectedIndex: _index,
         onSelected: (value) => setState(() => _index = value),
       ),
+    );
+  }
+
+  void _signOut() {
+    Navigator.of(context).pushAndRemoveUntil(
+      shipKiaRoute<void>(builder: (_) => const LoginScreen()),
+      (_) => false,
     );
   }
 }
