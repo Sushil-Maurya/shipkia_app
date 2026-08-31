@@ -1,20 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/feedback/feedback_messages.dart';
 import '../../core/feedback/shipkia_feedback.dart';
+import '../../core/router/app_route_paths.dart';
 import '../../data/shipkia_mock_data.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
 class OrderDetailScreen extends StatelessWidget {
-  const OrderDetailScreen({required this.order, super.key});
+  const OrderDetailScreen({required this.orderId, this.order, super.key});
 
-  final OrderSummary order;
+  final String orderId;
+  final OrderSummary? order;
 
   @override
   Widget build(BuildContext context) {
+    final order = this.order ?? _findOrder(orderId);
+    if (order == null) {
+      return AppScaffold(
+        title: orderId,
+        body: AppEmptyState(
+          title: 'Order not found',
+          message: 'This order route is valid, but the order could not be found.',
+          actionLabel: 'Back to orders',
+          onAction: () => context.go(AppRoutePaths.orders),
+        ),
+      );
+    }
+
     return AppScaffold(
       title: order.id,
       bottomNavigationBar: SafeArea(
@@ -174,6 +190,13 @@ class OrderDetailScreen extends StatelessWidget {
     final minute = value.minute.toString().padLeft(2, '0');
     final period = value.hour >= 12 ? 'PM' : 'AM';
     return '${value.day} Aug ${value.year}, $hour:$minute $period';
+  }
+
+  OrderSummary? _findOrder(String id) {
+    for (final order in orders) {
+      if (order.id == id) return order;
+    }
+    return null;
   }
 }
 

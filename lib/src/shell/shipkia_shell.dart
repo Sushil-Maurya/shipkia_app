@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../core/router/navigation_service.dart';
 import '../design_system/design_system.dart';
-import '../features/account/account_screen.dart';
-import '../features/auth/login_screen.dart';
-import '../features/dashboard/dashboard_screen.dart';
-import '../features/home/home_screen.dart';
-import '../features/more/more_screen.dart';
-import '../features/ndr/ndr_screen.dart';
-import '../features/orders/orders_screen.dart';
-import '../features/wallet/wallet_screen.dart';
 import '../widgets/shipkia_shell_widgets.dart';
 
 class ShipKiaShell extends StatefulWidget {
-  const ShipKiaShell({super.key});
+  const ShipKiaShell({required this.navigationShell, super.key});
+
+  final StatefulNavigationShell navigationShell;
 
   @override
   State<ShipKiaShell> createState() => _ShipKiaShellState();
@@ -20,16 +16,6 @@ class ShipKiaShell extends StatefulWidget {
 
 class _ShipKiaShellState extends State<ShipKiaShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  int _index = 0;
-
-  static const _screens = [
-    HomeScreen(),
-    DashboardScreen(),
-    OrdersScreen(),
-    NdrScreen(),
-    WalletScreen(),
-    MoreScreen(),
-  ];
 
   static const _titles = [
     ('Home', 'Dispatch Console'),
@@ -61,37 +47,26 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
         builder: (context) => Column(
           children: [
             ShipKiaTopBar(
-              title: _titles[_index].$1,
-              subtitle: _titles[_index].$2,
+              title: _titles[widget.navigationShell.currentIndex].$1,
+              subtitle: _titles[widget.navigationShell.currentIndex].$2,
               onOpenModules: () => _scaffoldKey.currentState?.openDrawer(),
-              onOpenProfile: () => Navigator.of(context).push(
-                shipKiaRoute<void>(
-                  builder: (_) => AccountScreen(onSignOut: _signOut),
-                ),
-              ),
+              onOpenProfile: () => context.toAccount(),
             ),
-            Expanded(
-              child: AppAnimatedSwitcher(
-                child: KeyedSubtree(
-                  key: ValueKey(_index),
-                  child: _screens[_index],
-                ),
-              ),
-            ),
+            Expanded(child: widget.navigationShell),
           ],
         ),
       ),
       bottomNavigationBar: ShipKiaBottomNav(
-        selectedIndex: _index,
-        onSelected: (value) => setState(() => _index = value),
+        selectedIndex: widget.navigationShell.currentIndex,
+        onSelected: _goBranch,
       ),
     );
   }
 
-  void _signOut() {
-    Navigator.of(context).pushAndRemoveUntil(
-      shipKiaRoute<void>(builder: (_) => const LoginScreen()),
-      (_) => false,
+  void _goBranch(int index) {
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 }

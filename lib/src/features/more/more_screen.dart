@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../core/router/navigation_service.dart';
 import '../../data/shipkia_mock_data.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
-import '../tracking/tracking_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -22,8 +22,7 @@ class MoreScreen extends StatelessWidget {
           title: 'Tracking',
           subtitle: 'Public AWB or order lookup',
           trailing: const Icon(Icons.chevron_right, size: 18),
-          onTap: () => Navigator.of(context)
-              .push(shipKiaRoute<void>(builder: (_) => const TrackingScreen())),
+          onTap: () => context.toTracking(),
         ),
         for (final module in primaryModules)
           AppListTile(

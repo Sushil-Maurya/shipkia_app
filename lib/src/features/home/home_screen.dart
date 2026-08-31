@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/feedback/shipkia_feedback.dart';
+import '../../core/router/navigation_service.dart';
 import '../../data/shipkia_mock_data.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_shell_widgets.dart';
 import '../../widgets/shipkia_widgets.dart';
-import '../orders/order_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -66,11 +66,7 @@ class HomeScreen extends StatelessWidget {
           for (final order in orders.take(3))
             SkOrderRow(
               order: order,
-              onTap: () => Navigator.of(context).push(
-                shipKiaRoute<void>(
-                  builder: (_) => OrderDetailScreen(order: order),
-                ),
-              ),
+              onTap: () => context.toOrderDetails(order.id, order: order),
             ),
         ],
       ),

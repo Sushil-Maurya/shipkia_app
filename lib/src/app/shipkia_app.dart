@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../core/auth/shipkia_auth_controller.dart';
+import '../core/auth/shipkia_auth_scope.dart';
 import '../core/feedback/network_status_controller.dart';
 import '../core/feedback/shipkia_feedback.dart';
 import '../core/feedback/shipkia_feedback_host.dart';
-import '../design_system/design_system.dart';
-import '../features/auth/login_screen.dart';
+import '../core/router/app_router.dart';
 import '../theme/shipkia_theme.dart';
 import 'shipkia_theme_controller.dart';
 
 class ShipKiaApp extends StatefulWidget {
-  const ShipKiaApp({this.networkController, super.key});
+  const ShipKiaApp({this.authController, this.networkController, super.key});
 
+  final ShipKiaAuthController? authController;
   final ShipKiaNetworkStatusController? networkController;
 
   @override
@@ -19,73 +21,49 @@ class ShipKiaApp extends StatefulWidget {
 
 class _ShipKiaAppState extends State<ShipKiaApp> {
   final _themeMode = ValueNotifier(ThemeMode.system);
+  late final ShipKiaAuthController _authController;
+  late final AppRouter _appRouter;
+
+  @override
+  void initState() {
+    super.initState();
+    _authController = widget.authController ?? ShipKiaAuthController();
+    _appRouter = AppRouter(authController: _authController);
+    _authController.restoreSession();
+  }
 
   @override
   void dispose() {
     _themeMode.dispose();
+    if (widget.authController == null) _authController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ShipKiaThemeController(
-      notifier: _themeMode,
-      child: ValueListenableBuilder<ThemeMode>(
-        valueListenable: _themeMode,
-        builder: (context, themeMode, child) {
-          return MaterialApp(
-            title: 'ShipKia',
-            debugShowCheckedModeBanner: false,
-            scaffoldMessengerKey: ShipKiaFeedback.messengerKey,
-            theme: ShipKiaTheme.light,
-            darkTheme: ShipKiaTheme.dark,
-            themeMode: themeMode,
-            builder: (context, child) => ShipKiaFeedbackHost(
-              networkController: widget.networkController,
-              child: child ?? const SizedBox.shrink(),
-            ),
-            home: child,
-          );
-        },
-        child: const _ShipKiaStartupGate(child: LoginScreen()),
+    return ShipKiaAuthScope(
+      controller: _authController,
+      child: ShipKiaThemeController(
+        notifier: _themeMode,
+        child: ValueListenableBuilder<ThemeMode>(
+          valueListenable: _themeMode,
+          builder: (context, themeMode, child) {
+            return MaterialApp.router(
+              title: 'ShipKia',
+              debugShowCheckedModeBanner: false,
+              scaffoldMessengerKey: ShipKiaFeedback.messengerKey,
+              theme: ShipKiaTheme.light,
+              darkTheme: ShipKiaTheme.dark,
+              themeMode: themeMode,
+              routerConfig: _appRouter.router,
+              builder: (context, child) => ShipKiaFeedbackHost(
+                networkController: widget.networkController,
+                child: child ?? const SizedBox.shrink(),
+              ),
+            );
+          },
+        ),
       ),
-    );
-  }
-}
-
-class _ShipKiaStartupGate extends StatefulWidget {
-  const _ShipKiaStartupGate({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_ShipKiaStartupGate> createState() => _ShipKiaStartupGateState();
-}
-
-class _ShipKiaStartupGateState extends State<_ShipKiaStartupGate> {
-  var _ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _prepareAppContent();
-  }
-
-  Future<void> _prepareAppContent() async {
-    await Future<void>.delayed(ShipKiaMotion.startup);
-    if (mounted) setState(() => _ready = true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppAnimatedSwitcher(
-      duration: ShipKiaMotion.emphasized,
-      child: _ready
-          ? widget.child
-          : const AppLoadingScreen(
-              key: ValueKey('shipkia-loading'),
-              message: 'Loading your workspace.',
-            ),
     );
   }
 }

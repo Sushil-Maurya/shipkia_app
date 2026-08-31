@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/auth/shipkia_auth_scope.dart';
+import '../../core/router/app_route_paths.dart';
 import '../../design_system/design_system.dart';
-import '../../shell/shipkia_shell.dart';
 import '../../theme/shipkia_colors.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,9 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
-    Navigator.of(
-      context,
-    ).pushReplacement(shipKiaRoute<void>(builder: (_) => const ShipKiaShell()));
+    ShipKiaAuthScope.of(context).signIn();
   }
 
   @override
@@ -283,12 +283,7 @@ class _AuthFormColumn extends StatelessWidget {
             ),
             AppButton(
               label: 'Register Now',
-              onPressed: () => Navigator.of(context).push(
-                shipKiaRoute<void>(
-                  builder: (_) => const SignUpScreen(),
-                  transition: ShipKiaRouteTransition.modal,
-                ),
-              ),
+              onPressed: () => context.push(AppRoutePaths.signUp),
               variant: AppButtonVariant.ghost,
               height: 28,
             ),
@@ -369,12 +364,7 @@ class _LoginForm extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: AppButton(
               label: 'Forgot password?',
-              onPressed: () => Navigator.of(context).push(
-                shipKiaRoute<void>(
-                  builder: (_) => const ForgotPasswordScreen(),
-                  transition: ShipKiaRouteTransition.modal,
-                ),
-              ),
+              onPressed: () => context.push(AppRoutePaths.forgotPassword),
               variant: AppButtonVariant.ghost,
               height: 28,
             ),
@@ -504,11 +494,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               actionLabel: 'Back to Sign In',
               onAction: () => Navigator.of(context).pop(),
               secondaryActionLabel: 'Open update password',
-              onSecondaryAction: () => Navigator.of(context).pushReplacement(
-                shipKiaRoute<void>(
-                  builder: (_) => const UpdatePasswordScreen(),
-                  transition: ShipKiaRouteTransition.modal,
-                ),
+              onSecondaryAction: () => context.pushReplacement(
+                AppRoutePaths.resetPassword,
               ),
             )
           : _ReferenceAuthForm(
@@ -721,14 +708,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _FullAuthButton(
                 label: 'Register',
                 icon: Icons.send_outlined,
-                onPressed: () => Navigator.of(context).pushReplacement(
-                  shipKiaRoute<void>(
-                    builder: (_) => RegisterVerifyScreen(
-                      email: _emailController.text.trim().isEmpty
+                onPressed: () => context.pushReplacement(
+                  Uri(
+                    path: AppRoutePaths.registerVerify,
+                    queryParameters: {
+                      'email': _emailController.text.trim().isEmpty
                           ? 'user@example.com'
                           : _emailController.text.trim(),
-                    ),
-                  ),
+                    },
+                  ).toString(),
                 ),
               ),
             ],
@@ -767,10 +755,7 @@ class _RegisterVerifyScreenState extends State<RegisterVerifyScreen> {
               title: 'Registration completed',
               description: 'Your account is registered. Opening login...',
               actionLabel: 'Go to Login',
-              onAction: () => Navigator.of(context).pushAndRemoveUntil(
-                shipKiaRoute<void>(builder: (_) => const LoginScreen()),
-                (_) => false,
-              ),
+              onAction: () => context.go(AppRoutePaths.login),
             )
           : _ReferenceAuthForm(
               kicker: 'Final step',
