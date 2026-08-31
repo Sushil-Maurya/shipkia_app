@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shipkia_app/src/core/feedback/network_status_controller.dart';
 import 'package:shipkia_app/src/app/shipkia_app.dart';
 
 void main() {
   testWidgets('ShipKia app opens login and enters operations shell', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ShipKiaApp());
+    await tester.pumpWidget(ShipKiaApp(networkController: _onlineNetwork()));
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
 
@@ -24,7 +25,7 @@ void main() {
   testWidgets('account page theme toggle switches app brightness', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const ShipKiaApp());
+    await tester.pumpWidget(ShipKiaApp(networkController: _onlineNetwork()));
     await tester.pump(const Duration(milliseconds: 900));
     await tester.pumpAndSettle();
 
@@ -51,4 +52,13 @@ void main() {
       Brightness.dark,
     );
   });
+}
+
+ShipKiaNetworkStatusController _onlineNetwork() {
+  final controller = ShipKiaNetworkStatusController(
+    checkConnection: () async => true,
+    stabilizationDelay: Duration.zero,
+    pollInterval: const Duration(minutes: 1),
+  );
+  return controller;
 }

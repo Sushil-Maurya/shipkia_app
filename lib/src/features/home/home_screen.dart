@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/shipkia_feedback.dart';
 import '../../data/shipkia_mock_data.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
@@ -147,7 +148,13 @@ class _HomeFiltersSheet extends StatelessWidget {
                 child: AppButton(
                   label: 'Apply filters',
                   icon: Icons.check,
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ShipKiaFeedback.info(
+                      'Filters applied.',
+                      eventKey: 'home-filters-applied',
+                    );
+                  },
                 ),
               ),
             ],

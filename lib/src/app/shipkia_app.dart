@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../core/feedback/network_status_controller.dart';
+import '../core/feedback/shipkia_feedback.dart';
+import '../core/feedback/shipkia_feedback_host.dart';
 import '../design_system/design_system.dart';
 import '../features/auth/login_screen.dart';
 import '../theme/shipkia_theme.dart';
 import 'shipkia_theme_controller.dart';
 
 class ShipKiaApp extends StatefulWidget {
-  const ShipKiaApp({super.key});
+  const ShipKiaApp({this.networkController, super.key});
+
+  final ShipKiaNetworkStatusController? networkController;
 
   @override
   State<ShipKiaApp> createState() => _ShipKiaAppState();
@@ -31,9 +36,14 @@ class _ShipKiaAppState extends State<ShipKiaApp> {
           return MaterialApp(
             title: 'ShipKia',
             debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: ShipKiaFeedback.messengerKey,
             theme: ShipKiaTheme.light,
             darkTheme: ShipKiaTheme.dark,
             themeMode: themeMode,
+            builder: (context, child) => ShipKiaFeedbackHost(
+              networkController: widget.networkController,
+              child: child ?? const SizedBox.shrink(),
+            ),
             home: child,
           );
         },

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../core/feedback/feedback_messages.dart';
+import '../../core/feedback/shipkia_feedback.dart';
 import '../../data/shipkia_mock_data.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
@@ -23,7 +26,10 @@ class OrderDetailScreen extends StatelessWidget {
                 child: AppButton(
                   label: 'Raise ticket',
                   icon: Icons.support_agent,
-                  onPressed: () {},
+                  onPressed: () => ShipKiaFeedback.info(
+                    'Support ticket draft opened.',
+                    eventKey: 'ticket-draft-opened',
+                  ),
                   variant: AppButtonVariant.secondary,
                 ),
               ),
@@ -32,7 +38,10 @@ class OrderDetailScreen extends StatelessWidget {
                 child: AppButton(
                   label: 'Ship now',
                   icon: Icons.local_shipping_outlined,
-                  onPressed: () {},
+                  onPressed: () => ShipKiaFeedback.success(
+                    ShipKiaFeedbackMessages.shipmentCreated,
+                    eventKey: 'shipment-created',
+                  ),
                 ),
               ),
             ],
@@ -85,7 +94,11 @@ class OrderDetailScreen extends StatelessWidget {
                   fields: [
                     _DetailFieldData(label: 'Customer', value: order.customer),
                     _DetailFieldData(label: 'Order ID', value: order.id),
-                    _DetailFieldData(label: 'AWB', value: order.awb),
+                    _DetailFieldData(
+                      label: 'AWB',
+                      value: order.awb,
+                      copyable: true,
+                    ),
                     _DetailFieldData(label: 'Courier', value: order.courier),
                     _DetailFieldData(label: 'Destination', value: order.city),
                     _DetailFieldData(
@@ -127,18 +140,29 @@ class OrderDetailScreen extends StatelessWidget {
           _ActionTile(
             icon: Icons.print_outlined,
             label: 'Download label',
-            onTap: () {},
+            onTap: () => ShipKiaFeedback.success(
+              'Shipping label downloaded.',
+              eventKey: 'shipping-label-downloaded',
+            ),
           ),
           _ActionTile(
             icon: Icons.sync,
             label: 'Sync order status',
-            onTap: () {},
+            onTap: () {
+              ShipKiaFeedback.syncStarted();
+              Future<void>.delayed(ShipKiaMotion.refresh, () {
+                ShipKiaFeedback.syncCompleted();
+              });
+            },
           ),
           _ActionTile(
             icon: Icons.cancel_outlined,
             label: 'Cancel order',
             danger: true,
-            onTap: () {},
+            onTap: () => ShipKiaFeedback.warning(
+              'Cancel order requires confirmation.',
+              eventKey: 'cancel-order-warning',
+            ),
           ),
         ],
       ),
@@ -154,10 +178,15 @@ class OrderDetailScreen extends StatelessWidget {
 }
 
 class _DetailFieldData {
-  const _DetailFieldData({required this.label, required this.value});
+  const _DetailFieldData({
+    required this.label,
+    required this.value,
+    this.copyable = false,
+  });
 
   final String label;
   final String value;
+  final bool copyable;
 }
 
 class _DetailFieldGrid extends StatelessWidget {
@@ -185,6 +214,19 @@ class _DetailFieldGrid extends StatelessWidget {
                     label: field.label,
                     initialValue: field.value,
                     readOnly: true,
+                    suffix: field.copyable
+                        ? AppIconButton(
+                            icon: Icons.copy,
+                            tooltip: 'Copy ${field.label}',
+                            size: 28,
+                            onPressed: () {
+                              Clipboard.setData(
+                                ClipboardData(text: field.value),
+                              );
+                              ShipKiaFeedback.copiedTrackingNumber();
+                            },
+                          )
+                        : null,
                   ),
                 ),
               )

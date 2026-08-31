@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/feedback/shipkia_feedback.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
@@ -21,7 +22,10 @@ class TrackingScreen extends StatelessWidget {
               prefixIcon: Icons.travel_explore,
               suffix: AppIconButton(
                 icon: Icons.arrow_forward,
-                onPressed: () {},
+                onPressed: () => ShipKiaFeedback.info(
+                  'Tracking details refreshed from saved data.',
+                  eventKey: 'tracking-refreshed',
+                ),
                 tooltip: 'Track',
                 size: 28,
               ),
