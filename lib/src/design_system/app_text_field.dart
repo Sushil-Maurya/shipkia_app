@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/shipkia_colors.dart';
 import 'app_platform.dart';
@@ -21,6 +22,13 @@ class AppTextField extends StatefulWidget {
     this.maxLines = 1,
     this.readOnly = false,
     this.enabled = true,
+    this.showReadOnlyBadge = true,
+    this.helperText,
+    this.errorText,
+    this.onChanged,
+    this.onSubmitted,
+    this.textInputAction,
+    this.inputFormatters,
     this.height = 40,
     super.key,
   });
@@ -39,6 +47,13 @@ class AppTextField extends StatefulWidget {
   final int? maxLines;
   final bool readOnly;
   final bool enabled;
+  final bool showReadOnlyBadge;
+  final String? helperText;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final TextInputAction? textInputAction;
+  final List<TextInputFormatter>? inputFormatters;
   final double height;
 
   @override
@@ -97,6 +112,10 @@ class _AppTextFieldState extends State<AppTextField> {
               maxLines: widget.maxLines,
               readOnly: widget.readOnly,
               enabled: widget.enabled,
+              onChanged: widget.readOnly ? null : widget.onChanged,
+              onSubmitted: widget.onSubmitted,
+              textInputAction: widget.textInputAction,
+              inputFormatters: widget.inputFormatters,
               prefix: widget.prefixIcon == null
                   ? null
                   : Padding(
@@ -115,8 +134,10 @@ class _AppTextFieldState extends State<AppTextField> {
                     ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: widget.enabled
+                color: widget.enabled && !widget.readOnly
                     ? Theme.of(context).colorScheme.surface
+                    : widget.enabled
+                    ? ShipKiaColors.surfaceMuted(context)
                     : _disabledFill(context),
                 borderRadius: ShipKiaRadius.mdBorder,
                 border: Border.all(color: _borderColor(context)),
@@ -132,11 +153,19 @@ class _AppTextFieldState extends State<AppTextField> {
               maxLines: widget.maxLines,
               readOnly: widget.readOnly,
               enabled: widget.enabled,
+              onChanged: widget.readOnly ? null : widget.onChanged,
+              onSubmitted: widget.onSubmitted,
+              textInputAction: widget.textInputAction,
+              inputFormatters: widget.inputFormatters,
               decoration: InputDecoration(
                 hintText: widget.hintText,
+                errorText: widget.errorText,
+                helperText: widget.helperText,
                 counterText: '',
-                filled: !widget.enabled,
-                fillColor: _disabledFill(context),
+                filled: !widget.enabled || widget.readOnly,
+                fillColor: widget.enabled
+                    ? ShipKiaColors.surfaceMuted(context)
+                    : _disabledFill(context),
                 prefixIcon: widget.prefixIcon == null
                     ? null
                     : Icon(widget.prefixIcon, size: 18),
@@ -145,21 +174,58 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
     );
 
+    if (widget.label == null && AppPlatform.isCupertino) {
+      return _withCupertinoSupportText(context, field);
+    }
     if (widget.label == null) return field;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label!,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 11,
-            letterSpacing: 0,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.label!,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 11,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+            if (widget.readOnly && widget.showReadOnlyBadge)
+              Text(
+                'Read only',
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: ShipKiaColors.textSecondary(context)),
+              ),
+          ],
         ),
         const SizedBox(height: 6),
+        _withCupertinoSupportText(context, field),
+      ],
+    );
+  }
+
+  Widget _withCupertinoSupportText(BuildContext context, Widget field) {
+    if (!AppPlatform.isCupertino) return field;
+    final supportText = widget.errorText ?? widget.helperText;
+    if (supportText == null || supportText.trim().isEmpty) return field;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         field,
+        const SizedBox(height: 5),
+        Text(
+          supportText,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: widget.errorText == null
+                ? ShipKiaColors.textSecondary(context)
+                : ShipKiaColors.error,
+          ),
+        ),
       ],
     );
   }
