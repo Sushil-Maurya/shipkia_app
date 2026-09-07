@@ -28,37 +28,28 @@ class RouteStateReader {
 }
 
 class OrdersRouteQuery {
-  const OrdersRouteQuery({
-    this.status,
-    this.search,
-    this.sort = 'latest',
-  });
+  const OrdersRouteQuery({this.stage, this.search});
 
-  final String? status;
+  final String? stage;
   final String? search;
-  final String sort;
 
   factory OrdersRouteQuery.fromState(GoRouterState state) {
     final reader = RouteStateReader(state);
     return OrdersRouteQuery(
-      status: reader.optionalQueryValue(
-        'status',
+      stage: reader.optionalQueryValue(
+        'stage',
         allowedValues: const {
-          'ready',
-          'in-transit',
-          'ndr',
-          'delivered',
-          'cancelled',
+          'New',
+          'Ready to Ship',
+          'Ready to Pickup',
+          'In-Transit',
+          'Delivered',
+          'Cancelled',
+          'RTO',
+          'All',
         },
       ),
       search: reader.optionalQueryValue('search'),
-      sort: reader.optionalQueryValue(
-            'sort',
-            allowedValues: const {'latest', 'oldest'},
-            fallback: 'latest',
-          ) ??
-          'latest',
     );
   }
 }
-

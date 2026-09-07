@@ -8,17 +8,20 @@ import 'navigation_intent.dart';
 extension AppNavigation on BuildContext {
   void toHome() => go(AppRoutePaths.home);
   void toDashboard() => go(AppRoutePaths.dashboard);
-  void toOrders({String? status, String? search, String? sort}) {
-    go(_withQuery(AppRoutePaths.orders, {
-      if (status != null && status.isNotEmpty) 'status': status,
-      if (search != null && search.isNotEmpty) 'search': search,
-      if (sort != null && sort.isNotEmpty) 'sort': sort,
-    }));
+  void toOrders({String? stage, String? search}) {
+    go(
+      _withQuery(AppRoutePaths.orders, {
+        if (stage != null && stage.isNotEmpty && stage != 'All') 'stage': stage,
+        if (search != null && search.isNotEmpty) 'search': search,
+      }),
+    );
   }
 
   Future<T?> toOrderDetails<T>(String orderId, {OrderSummary? order}) {
-    return push<T>(AppRoutePaths.orderDetails(Uri.encodeComponent(orderId)),
-        extra: order);
+    return push<T>(
+      AppRoutePaths.orderDetails(Uri.encodeComponent(orderId)),
+      extra: order,
+    );
   }
 
   Future<T?> toTracking<T>({String? trackingId}) {
@@ -47,4 +50,3 @@ String _withQuery(String path, Map<String, String> queryParameters) {
   if (queryParameters.isEmpty) return path;
   return Uri(path: path, queryParameters: queryParameters).toString();
 }
-

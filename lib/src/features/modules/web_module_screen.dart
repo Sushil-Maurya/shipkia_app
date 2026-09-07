@@ -50,6 +50,7 @@ class _WebModuleScreenState extends State<WebModuleScreen> {
         ApiRequestConfig(
           method: widget.route.method,
           path: endpoint,
+          data: widget.route.kind == WebModuleKind.list ? const [] : null,
           params: widget.route.kind == WebModuleKind.list
               ? const {'page': '1', 'rows': '10'}
               : null,

@@ -24,6 +24,98 @@ class OrderSummary {
   final double amount;
   final ShipmentStatus status;
   final DateTime createdAt;
+
+  factory OrderSummary.fromJson(Map<String, dynamic> json) {
+    return OrderSummary(
+      id: _firstString(json, const [
+        'id',
+        'order_id',
+        'orderId',
+        'reference_id',
+        'referenceId',
+        'name',
+      ], fallback: 'Order')!,
+      awb: _firstString(json, const [
+        'awb',
+        'awb_number',
+        'awbNumber',
+        'waybill',
+        'tracking_number',
+        'trackingNumber',
+      ], fallback: '-')!,
+      customer: _firstString(json, const [
+        'customer',
+        'customer_name',
+        'customerName',
+        'buyer_name',
+        'buyerName',
+        'consignee',
+        'consignee_name',
+        'recipient_name',
+        'recipientName',
+      ], fallback: 'Customer')!,
+      city:
+          _firstString(json, const [
+            'city',
+            'destination_city',
+            'destinationCity',
+            'shipping_city',
+            'shippingCity',
+          ]) ??
+          _firstNestedString(
+            json,
+            const [
+              'shipping_address',
+              'shippingAddress',
+              'delivery_address',
+              'deliveryAddress',
+              'customer',
+            ],
+            const ['city', 'name'],
+          ) ??
+          '-',
+      courier: _firstString(json, const [
+        'courier',
+        'courier_name',
+        'courierName',
+        'courier_partner',
+        'courierPartner',
+        'shipping_partner',
+        'shippingPartner',
+      ], fallback: '-')!,
+      paymentMode: _paymentMode(json),
+      amount: _firstDouble(json, const [
+        'amount',
+        'total',
+        'total_amount',
+        'totalAmount',
+        'order_amount',
+        'orderAmount',
+        'invoice_value',
+        'invoiceValue',
+      ]),
+      status: _shipmentStatus(
+        _firstString(json, const [
+          'status',
+          'order_status',
+          'orderStatus',
+          'shipment_status',
+          'shipmentStatus',
+          'delivery_status',
+          'deliveryStatus',
+        ]),
+      ),
+      createdAt:
+          _firstDate(json, const [
+            'created_at',
+            'createdAt',
+            'order_date',
+            'orderDate',
+            'date',
+          ]) ??
+          DateTime.now(),
+    );
+  }
 }
 
 class MetricSummary {
@@ -139,4 +231,94 @@ String statusLabel(ShipmentStatus status) {
     case ShipmentStatus.cancelled:
       return 'Cancelled';
   }
+}
+
+String? _firstString(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  String? fallback,
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value == null) continue;
+    final text = value.toString().trim();
+    if (text.isNotEmpty) return text;
+  }
+  return fallback;
+}
+
+String? _firstNestedString(
+  Map<String, dynamic> json,
+  List<String> parentKeys,
+  List<String> childKeys,
+) {
+  for (final parentKey in parentKeys) {
+    final value = json[parentKey];
+    if (value is! Map) continue;
+    final text = _firstString(Map<String, dynamic>.from(value), childKeys);
+    if (text != null && text.trim().isNotEmpty) return text;
+  }
+  return null;
+}
+
+double _firstDouble(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final parsed = double.tryParse(value.replaceAll(',', '').trim());
+      if (parsed != null) return parsed;
+    }
+  }
+  return 0;
+}
+
+DateTime? _firstDate(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is DateTime) return value;
+    if (value is String) {
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+  }
+  return null;
+}
+
+String _paymentMode(Map<String, dynamic> json) {
+  final direct = _firstString(json, const [
+    'payment_mode',
+    'paymentMode',
+    'payment_type',
+    'paymentType',
+    'mode',
+  ]);
+  if (direct != null) return direct;
+  final cod = json['cod'] ?? json['is_cod'] ?? json['isCod'];
+  if (cod == true || cod?.toString().toLowerCase() == 'true') return 'COD';
+  return '-';
+}
+
+ShipmentStatus _shipmentStatus(String? value) {
+  final normalized = (value ?? '').toLowerCase().replaceAll(
+    RegExp(r'[^a-z]'),
+    '',
+  );
+  if (normalized.contains('ndr') ||
+      normalized.contains('attempt') ||
+      normalized.contains('rto') ||
+      normalized.contains('undelivered')) {
+    return ShipmentStatus.ndr;
+  }
+  if (normalized == 'new' || normalized.contains('readytoship')) {
+    return ShipmentStatus.readyToShip;
+  }
+  if (normalized.contains('transit') ||
+      normalized.contains('shipped') ||
+      normalized.contains('pickup')) {
+    return ShipmentStatus.inTransit;
+  }
+  if (normalized.contains('deliver')) return ShipmentStatus.delivered;
+  if (normalized.contains('cancel')) return ShipmentStatus.cancelled;
+  return ShipmentStatus.readyToShip;
 }

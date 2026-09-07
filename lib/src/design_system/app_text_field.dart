@@ -194,12 +194,6 @@ class _AppTextFieldState extends State<AppTextField> {
                 ),
               ),
             ),
-            if (widget.readOnly && widget.showReadOnlyBadge)
-              Text(
-                'Read only',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: ShipKiaColors.textSecondary(context)),
-              ),
           ],
         ),
         const SizedBox(height: 6),

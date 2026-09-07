@@ -149,13 +149,6 @@ class _FieldFrame extends StatelessWidget {
                       ?.copyWith(fontSize: 11, letterSpacing: 0),
                 ),
               ),
-              if (context.access.isReadOnly)
-                Text(
-                  'Read only',
-                  style: Theme.of(buildContext).textTheme.bodySmall?.copyWith(
-                    color: ShipKiaColors.textSecondary(buildContext),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: 6),

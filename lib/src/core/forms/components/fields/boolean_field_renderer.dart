@@ -49,13 +49,6 @@ class BooleanDynamicFieldRenderer implements DynamicFieldRenderer {
                     style: Theme.of(buildContext).textTheme.bodyMedium,
                   ),
                 ),
-                if (context.access.isReadOnly)
-                  Text(
-                    'Read only',
-                    style: Theme.of(buildContext).textTheme.bodySmall?.copyWith(
-                      color: ShipKiaColors.textSecondary(buildContext),
-                    ),
-                  ),
               ],
             ),
           ),

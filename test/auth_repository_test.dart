@@ -118,7 +118,7 @@ void main() {
                   'first_name': 'Ada',
                   'last_name': 'Lovelace',
                   'customer_id': 'SHIPKIA-CUST',
-                  'roles': ['orders.view'],
+                  'roles': ['Buopso Admin'],
                 },
               },
               _ => {
@@ -137,7 +137,13 @@ void main() {
       expect(await tokenProvider.getAccessToken(), 'access-token');
       expect(controller.profile?.email, 'ada@example.com');
       expect(controller.profile?.name, 'Ada Lovelace');
-      expect(controller.permissions, {'orders.view'});
+      expect(
+        controller.permissions,
+        containsAll([
+          ShipKiaPermissions.ordersView,
+          ShipKiaPermissions.walletView,
+        ]),
+      );
 
       controller.signOut();
 

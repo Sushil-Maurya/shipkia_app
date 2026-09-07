@@ -162,7 +162,7 @@ class ShipKiaAuthController extends ChangeNotifier {
       final profile = await repository.getProfile();
       _profile = profile;
       if (profile.roles.isNotEmpty) {
-        _permissions = profile.roles.toSet();
+        _permissions = _permissionsForProfile(profile);
       }
     } catch (_) {
       // Login already succeeded. Keep the user in the app and let protected
@@ -177,6 +177,23 @@ class ShipKiaAuthController extends ChangeNotifier {
     if (accessToken == null || accessToken.trim().isEmpty) {
       expireSession();
     }
+  }
+
+  Set<String> _permissionsForProfile(AuthProfile profile) {
+    final normalizedRoles = profile.roles.map(_normalizeRole).toSet();
+    final isAdmin =
+        profile.type.toLowerCase() == 'admin' ||
+        normalizedRoles.contains('buopsoadmin') ||
+        normalizedRoles.contains('administrator') ||
+        normalizedRoles.contains('ordermanager') ||
+        normalizedRoles.contains('buopso');
+
+    if (isAdmin) return _defaultPermissions;
+    return profile.roles.toSet();
+  }
+
+  String _normalizeRole(String role) {
+    return role.toLowerCase().replaceAll(RegExp(r'\s+'), '');
   }
 
   void _setStatus(ShipKiaAuthStatus value) {
