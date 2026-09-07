@@ -17,7 +17,12 @@ class ShipKiaFeedback {
   static ShipKiaFeedbackEvent? _currentEvent;
 
   static void show(ShipKiaFeedbackEvent event) {
-    final messenger = messengerKey.currentState;
+    final ScaffoldMessengerState? messenger;
+    try {
+      messenger = messengerKey.currentState;
+    } on FlutterError {
+      return;
+    }
     if (messenger == null) return;
     if (_shouldSuppressDuplicate(event)) return;
 

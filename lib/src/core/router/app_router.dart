@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/shipkia_mock_data.dart';
@@ -27,18 +26,14 @@ class AppRouter {
   AppRouter({
     required ShipKiaAuthController authController,
     String initialLocation = AppRoutePaths.splash,
-  })
-    : _guards = ShipKiaRouteGuards(authController) {
+  }) : _guards = ShipKiaRouteGuards(authController) {
     router = GoRouter(
       initialLocation: initialLocation,
       refreshListenable: authController,
       redirect: _guards.redirect,
       errorBuilder: (context, state) => const AppRouteErrorScreen.notFound(),
       routes: [
-        GoRoute(
-          path: '/',
-          redirect: (context, state) => AppRoutePaths.home,
-        ),
+        GoRoute(path: '/', redirect: (context, state) => AppRoutePaths.home),
         GoRoute(
           path: AppRoutePaths.splash,
           name: AppRouteNames.splash,
@@ -140,9 +135,7 @@ class AppRouter {
                       query: OrdersRouteQuery.fromState(state),
                     ),
                   ),
-                  routes: [
-                    _orderDetailsRoute(),
-                  ],
+                  routes: [_orderDetailsRoute()],
                 ),
               ],
             ),
@@ -199,10 +192,8 @@ class AppRouter {
         GoRoute(
           path: AppRoutePaths.tracking,
           name: AppRouteNames.trackingDetails,
-          pageBuilder: (context, state) => shipKiaPage<void>(
-            state: state,
-            child: const TrackingScreen(),
-          ),
+          pageBuilder: (context, state) =>
+              shipKiaPage<void>(state: state, child: const TrackingScreen()),
           routes: [
             GoRoute(
               path: ':trackingId',
@@ -269,5 +260,4 @@ class AppRouter {
       },
     );
   }
-
 }

@@ -6,6 +6,8 @@ import 'api_exception.dart';
 import 'api_request_config.dart';
 import 'api_response.dart';
 import 'api_token_provider.dart';
+import 'environment_config.dart';
+import 'network_config.dart';
 
 typedef ApiJsonParser<T> = T Function(dynamic data);
 
@@ -59,19 +61,16 @@ class DioApiClient implements ApiClient {
     required ApiTokenProvider tokenProvider,
     ApiFeedbackHandler? feedbackHandler,
     Map<String, dynamic>? commonHeaders,
-    Duration connectTimeout = const Duration(seconds: 20),
-    Duration receiveTimeout = const Duration(seconds: 30),
+    NetworkConfig? networkConfig,
+    Duration? connectTimeout,
+    Duration? receiveTimeout,
   }) : _dio =
            dio ??
-           Dio(
-             BaseOptions(
-               connectTimeout: connectTimeout,
-               receiveTimeout: receiveTimeout,
-               headers: {
-                 Headers.acceptHeader: Headers.jsonContentType,
-                 ...?commonHeaders,
-               },
-             ),
+           _createDio(
+             networkConfig ?? EnvironmentConfig.networkConfig,
+             commonHeaders: commonHeaders,
+             connectTimeout: connectTimeout,
+             receiveTimeout: receiveTimeout,
            ),
        _feedbackHandler = feedbackHandler ?? const ShipKiaApiFeedbackHandler() {
     _dio.interceptors.add(_AuthHeaderInterceptor(tokenProvider));
@@ -82,6 +81,25 @@ class DioApiClient implements ApiClient {
 
   final Dio _dio;
   final ApiFeedbackHandler? _feedbackHandler;
+
+  static Dio _createDio(
+    NetworkConfig config, {
+    Map<String, dynamic>? commonHeaders,
+    Duration? connectTimeout,
+    Duration? receiveTimeout,
+  }) {
+    return Dio(
+      BaseOptions(
+        baseUrl: config.resolvedBaseUrl,
+        connectTimeout: connectTimeout ?? config.timeout,
+        receiveTimeout: receiveTimeout ?? config.timeout,
+        headers: {
+          Headers.acceptHeader: Headers.jsonContentType,
+          ...?commonHeaders,
+        },
+      ),
+    );
+  }
 
   @override
   Future<T> request<T>(

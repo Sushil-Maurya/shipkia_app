@@ -15,10 +15,9 @@ class ShipKiaAuthController extends ChangeNotifier {
   ShipKiaAuthController({
     ShipKiaAuthStatus initialStatus = ShipKiaAuthStatus.loading,
     Set<String>? permissions,
-    Duration restoreDelay = const Duration(milliseconds: 650),
+    this._restoreDelay = const Duration(milliseconds: 650),
   }) : _status = initialStatus,
-       _permissions = permissions ?? _defaultPermissions,
-       _restoreDelay = restoreDelay;
+       _permissions = permissions ?? _defaultPermissions;
 
   ShipKiaAuthStatus _status;
   Set<String> _permissions;
@@ -72,4 +71,3 @@ class ShipKiaAuthController extends ChangeNotifier {
     notifyListeners();
   }
 }
-

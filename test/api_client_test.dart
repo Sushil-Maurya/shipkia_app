@@ -33,7 +33,7 @@ void main() {
     final order = await client.request<_Order>(
       ApiRequestConfig(
         method: HttpMethod.post,
-        path: '/orders',
+        path: ApiEndpoints.orders.create,
         data: [
           {'id': 1},
           {'id': 2},
@@ -47,7 +47,7 @@ void main() {
 
     expect(order.id, 1);
     expect(captured.method, 'POST');
-    expect(captured.path, '/orders');
+    expect(captured.path, ApiEndpoints.orders.create);
     expect(captured.data, isA<List<Map<String, int>>>());
     expect(captured.queryParameters, {'search': '455'});
     expect(captured.headers['accept'], Headers.jsonContentType);
@@ -70,9 +70,9 @@ void main() {
     );
 
     await client.request<void>(
-      const ApiRequestConfig(
+      ApiRequestConfig(
         method: HttpMethod.delete,
-        path: '/orders/1',
+        path: ApiEndpoints.orders.delete(1),
         headers: {'Authorization': 'Bearer request-token'},
       ),
     );
@@ -99,9 +99,9 @@ void main() {
     );
 
     final accepted = await client.request<bool>(
-      const ApiRequestConfig(
+      ApiRequestConfig(
         method: HttpMethod.post,
-        path: '/auth/login',
+        path: ApiEndpoints.auth.login,
         data: 'raw credentials',
         requiresAuth: false,
       ),
@@ -168,9 +168,9 @@ void main() {
 
       await expectLater(
         client.request<void>(
-          const ApiRequestConfig(
+          ApiRequestConfig(
             method: HttpMethod.get,
-            path: '/orders',
+            path: ApiEndpoints.orders.list,
             errorMessage: 'Unable to load orders.',
           ),
         ),
@@ -218,9 +218,9 @@ void main() {
     );
 
     final result = await client.request<Map<String, dynamic>>(
-      const ApiRequestConfig(
+      ApiRequestConfig(
         method: HttpMethod.get,
-        path: '/retry',
+        path: ApiEndpoints.orders.list,
         retry: RetryConfig(
           enabled: true,
           maxAttempts: 2,
