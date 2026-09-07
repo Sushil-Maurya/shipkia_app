@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../app/shipkia_theme_controller.dart';
+import '../../core/auth/shipkia_auth_scope.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({required this.onSignOut, super.key});
 
-  final VoidCallback onSignOut;
+  final Future<void> Function() onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +97,19 @@ class _AccountHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profile = ShipKiaAuthScope.of(context).profile;
+    final displayName = _displayName(
+      profileName: profile?.name,
+      email: profile?.email,
+    );
+    final displayEmail = _displayEmail(profile?.email);
+    final accountLabel = _accountLabel(
+      customerId: profile?.customerId,
+      type: profile?.type,
+    );
+    final roleLabel = _roleLabel(profile?.roles, profile?.type);
+    final initials = _initials(displayName, displayEmail);
+
     return Container(
       margin: const EdgeInsets.all(ShipKiaSpacing.page),
       decoration: BoxDecoration(
@@ -123,7 +137,7 @@ class _AccountHeader extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'OS',
+                initials,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: ShipKiaColors.paper,
                   fontWeight: FontWeight.w900,
@@ -139,7 +153,7 @@ class _AccountHeader extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Ops Supervisor',
+                          displayName,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
@@ -148,12 +162,12 @@ class _AccountHeader extends StatelessWidget {
                               ),
                         ),
                       ),
-                      const _HeaderPill(label: 'ADMIN'),
+                      _HeaderPill(label: roleLabel),
                     ],
                   ),
                   const SizedBox(height: ShipKiaSpacing.xs),
                   Text(
-                    'ops@shipkia.com',
+                    displayEmail,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: ShipKiaColors.paper.withValues(alpha: 0.84),
@@ -169,10 +183,16 @@ class _AccountHeader extends StatelessWidget {
                         color: ShipKiaColors.paper,
                       ),
                       const SizedBox(width: ShipKiaSpacing.xs),
-                      Text(
-                        'SHIPKIA-DEMO',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: ShipKiaColors.paper.withValues(alpha: 0.78),
+                      Expanded(
+                        child: Text(
+                          accountLabel,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: ShipKiaColors.paper.withValues(
+                                  alpha: 0.78,
+                                ),
+                              ),
                         ),
                       ),
                     ],
@@ -184,6 +204,58 @@ class _AccountHeader extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _displayName({String? profileName, String? email}) {
+    final trimmedName = profileName?.trim();
+    if (trimmedName != null && trimmedName.isNotEmpty) return trimmedName;
+    final trimmedEmail = email?.trim();
+    if (trimmedEmail != null && trimmedEmail.isNotEmpty) {
+      return trimmedEmail.split('@').first;
+    }
+    return 'ShipKia User';
+  }
+
+  String _displayEmail(String? email) {
+    final trimmed = email?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    return 'Signed in';
+  }
+
+  String _accountLabel({String? customerId, String? type}) {
+    final customer = customerId?.trim();
+    if (customer != null && customer.isNotEmpty) return customer;
+    final userType = type?.trim();
+    if (userType != null && userType.isNotEmpty) return userType.toUpperCase();
+    return 'SHIPKIA';
+  }
+
+  String _roleLabel(List<String>? roles, String? type) {
+    if (roles != null) {
+      for (final role in roles) {
+        final trimmed = role.trim();
+        if (trimmed.isNotEmpty) return trimmed.toUpperCase();
+      }
+    }
+    final userType = type?.trim();
+    if (userType != null && userType.isNotEmpty) return userType.toUpperCase();
+    return 'USER';
+  }
+
+  String _initials(String name, String email) {
+    final words = name
+        .split(RegExp(r'\s+'))
+        .where((word) => word.trim().isNotEmpty)
+        .toList();
+    if (words.length >= 2) {
+      return '${words.first[0]}${words[1][0]}'.toUpperCase();
+    }
+    if (words.length == 1 && words.first.length >= 2) {
+      return words.first.substring(0, 2).toUpperCase();
+    }
+    final fallback = email.trim();
+    if (fallback.length >= 2) return fallback.substring(0, 2).toUpperCase();
+    return 'SK';
   }
 }
 

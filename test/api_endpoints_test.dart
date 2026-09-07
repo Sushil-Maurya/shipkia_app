@@ -66,14 +66,18 @@ void main() {
       '/api/support/tickets/T%201',
     );
     expect(ApiEndpoints.wallet.summary, '/api/wallet/summary');
-    expect(ApiEndpoints.profile.current, '/auth/user/profile');
+    expect(ApiEndpoints.profile.current, '/auth/users/profile');
   });
 
   test('endpoint constants integrate with ApiRequestConfig', () {
     final config = ApiRequestConfig(
       method: HttpMethod.post,
       path: ApiEndpoints.auth.login,
-      data: const {'email': 'ops@shipkia.test', 'password': 'secret'},
+      data: const {
+        'type': 'email',
+        'uid': 'ops@shipkia.test',
+        'password': 'secret',
+      },
       params: const {'source': 'mobile'},
       requiresAuth: false,
     );

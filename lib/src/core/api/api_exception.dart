@@ -47,10 +47,25 @@ class ApiExceptionMapper {
   }
 
   static ApiException unknown(Object error) {
+    if (error is ApiException) return error;
     return ApiException(
       type: ShipKiaApiFailureType.unknown,
       message: _messageFor(ShipKiaApiFailureType.unknown),
       cause: error,
+    );
+  }
+
+  static ApiException fromEnvelope({
+    required Object? data,
+    required int? statusCode,
+    String? message,
+  }) {
+    final type = ShipKiaFeedbackMapper.failureTypeForStatusCode(statusCode);
+    return ApiException(
+      type: type,
+      statusCode: statusCode,
+      responseData: data,
+      message: message ?? _messageFrom(data) ?? _messageFor(type),
     );
   }
 

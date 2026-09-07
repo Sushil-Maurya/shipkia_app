@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shipkia_app/src/core/feedback/network_status_controller.dart';
 import 'package:shipkia_app/src/app/shipkia_app.dart';
+import 'package:shipkia_app/src/core/auth/shipkia_auth_controller.dart';
+import 'package:shipkia_app/src/core/feedback/network_status_controller.dart';
 
 void main() {
   testWidgets('ShipKia app opens login and enters operations shell', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(ShipKiaApp(networkController: _onlineNetwork()));
+    await tester.pumpWidget(
+      ShipKiaApp(authController: _auth(), networkController: _onlineNetwork()),
+    );
     await tester.pump(const Duration(milliseconds: 800));
     await tester.pumpAndSettle();
 
@@ -25,7 +28,9 @@ void main() {
   testWidgets('account page theme toggle switches app brightness', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(ShipKiaApp(networkController: _onlineNetwork()));
+    await tester.pumpWidget(
+      ShipKiaApp(authController: _auth(), networkController: _onlineNetwork()),
+    );
     await tester.pump(const Duration(milliseconds: 900));
     await tester.pumpAndSettle();
 
@@ -61,4 +66,11 @@ ShipKiaNetworkStatusController _onlineNetwork() {
     pollInterval: const Duration(minutes: 1),
   );
   return controller;
+}
+
+ShipKiaAuthController _auth() {
+  return ShipKiaAuthController(
+    initialStatus: ShipKiaAuthStatus.loading,
+    restoreDelay: Duration.zero,
+  );
 }

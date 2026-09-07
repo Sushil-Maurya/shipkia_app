@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../core/auth/shipkia_auth_controller.dart';
 import '../core/auth/shipkia_auth_scope.dart';
+import '../core/api/api.dart';
 import '../core/feedback/network_status_controller.dart';
 import '../core/feedback/shipkia_feedback.dart';
 import '../core/feedback/shipkia_feedback_host.dart';
 import '../core/router/app_router.dart';
+import '../features/auth/data/auth_repository.dart';
 import '../theme/shipkia_theme.dart';
 import 'shipkia_theme_controller.dart';
 
@@ -27,9 +29,18 @@ class _ShipKiaAppState extends State<ShipKiaApp> {
   @override
   void initState() {
     super.initState();
-    _authController = widget.authController ?? ShipKiaAuthController();
+    _authController = widget.authController ?? _createAuthController();
     _appRouter = AppRouter(authController: _authController);
     _authController.restoreSession();
+  }
+
+  ShipKiaAuthController _createAuthController() {
+    final tokenProvider = InMemoryApiTokenProvider();
+    final apiClient = DioApiClient(tokenProvider: tokenProvider);
+    return ShipKiaAuthController(
+      authRepository: AuthRepository(apiClient),
+      tokenProvider: tokenProvider,
+    );
   }
 
   @override

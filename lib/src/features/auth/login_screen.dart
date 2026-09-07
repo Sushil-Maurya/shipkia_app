@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/shipkia_auth_scope.dart';
+import '../../core/api/api.dart';
 import '../../core/router/app_route_paths.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
@@ -15,8 +16,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'ops@shipkia.com');
-  final _passwordController = TextEditingController(text: 'shipkia-demo');
+  final _emailController = TextEditingController(text: 'arya@yopmail.com');
+  final _passwordController = TextEditingController(text: 'P@ssword1');
 
   @override
   void dispose() {
@@ -25,8 +26,19 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
-    ShipKiaAuthScope.of(context).signIn();
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      return;
+    }
+
+    try {
+      await ShipKiaAuthScope.of(context)
+          .login(email: email, password: password);
+    } on ApiException {
+      // ApiClient already maps and displays the user-facing error message.
+    }
   }
 
   @override
@@ -245,7 +257,7 @@ class _AuthFormColumn extends StatelessWidget {
 
   final TextEditingController emailController;
   final TextEditingController passwordController;
-  final VoidCallback onLogin;
+  final Future<void> Function() onLogin;
   final bool showMobileLogo;
 
   @override
@@ -327,56 +339,65 @@ class _LoginForm extends StatelessWidget {
 
   final TextEditingController emailController;
   final TextEditingController passwordController;
-  final VoidCallback onLogin;
+  final Future<void> Function() onLogin;
 
   @override
   Widget build(BuildContext context) {
+    final auth = ShipKiaAuthScope.of(context);
     return AutofillGroup(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const _AuthEyebrow('Welcome back'),
-          const SizedBox(height: 8),
-          Text(
-            'Login to ShipKia',
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontSize: 24, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 24),
-          _AuthField(
-            label: 'Email',
-            controller: emailController,
-            hintText: 'Enter your email',
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-          ),
-          const SizedBox(height: 16),
-          _AuthField(
-            label: 'Password',
-            controller: passwordController,
-            hintText: 'Enter password',
-            obscureText: true,
-            autofillHints: const [AutofillHints.password],
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: AppButton(
-              label: 'Forgot password?',
-              onPressed: () => context.push(AppRoutePaths.forgotPassword),
-              variant: AppButtonVariant.ghost,
-              height: 28,
-            ),
-          ),
-          const SizedBox(height: 12),
-          AppButton(
-            label: 'Login',
-            onPressed: onLogin,
-            fullWidth: true,
-            height: 40,
-          ),
-        ],
+      child: AnimatedBuilder(
+        animation: auth,
+        builder: (context, _) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const _AuthEyebrow('Welcome back'),
+              const SizedBox(height: 8),
+              Text(
+                'Login to ShipKia',
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontSize: 24, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 24),
+              _AuthField(
+                label: 'Email',
+                controller: emailController,
+                hintText: 'Enter your email',
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+              ),
+              const SizedBox(height: 16),
+              _AuthField(
+                label: 'Password',
+                controller: passwordController,
+                hintText: 'Enter password',
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: AppButton(
+                  label: 'Forgot password?',
+                  onPressed: auth.isSubmitting
+                      ? null
+                      : () => context.push(AppRoutePaths.forgotPassword),
+                  variant: AppButtonVariant.ghost,
+                  height: 28,
+                ),
+              ),
+              const SizedBox(height: 12),
+              AppButton(
+                label: auth.isSubmitting ? 'Logging in' : 'Login',
+                onPressed: auth.isSubmitting ? null : onLogin,
+                loading: auth.isSubmitting,
+                fullWidth: true,
+                height: 40,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -494,9 +515,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               actionLabel: 'Back to Sign In',
               onAction: () => Navigator.of(context).pop(),
               secondaryActionLabel: 'Open update password',
-              onSecondaryAction: () => context.pushReplacement(
-                AppRoutePaths.resetPassword,
-              ),
+              onSecondaryAction: () =>
+                  context.pushReplacement(AppRoutePaths.resetPassword),
             )
           : _ReferenceAuthForm(
               kicker: 'Update access',

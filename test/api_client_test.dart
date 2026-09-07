@@ -53,6 +53,78 @@ void main() {
     expect(captured.headers['accept'], Headers.jsonContentType);
     expect(captured.headers['Authorization'], 'Bearer shipkia-token');
     expect(captured.headers['X-Feature'], 'orders');
+    expect(captured.extra['withCredentials'], isTrue);
+  });
+
+  test('unwraps backend success envelopes before parsing', () async {
+    final dio = Dio();
+    final client = DioApiClient(
+      dio: dio,
+      tokenProvider: const StaticApiTokenProvider(null),
+    );
+    dio.interceptors.add(
+      _ResolveInterceptor(
+        (options) => Response<Object?>(
+          requestOptions: options,
+          statusCode: 201,
+          data: {
+            'success': true,
+            'message': 'Login successfull.',
+            'result': {'session': 'session-token'},
+            'traceId': 'fb5a710e-7dbf-400a-ae19-9eb56c369803',
+          },
+        ),
+      ),
+    );
+
+    final response = await client.requestResponse<String>(
+      const ApiRequestConfig(
+        method: HttpMethod.post,
+        path: '/auth/login',
+        requiresAuth: false,
+      ),
+      fromJson: (data) => (data as Map<String, dynamic>)['session'] as String,
+    );
+
+    expect(response.data, 'session-token');
+    expect(response.message, 'Login successfull.');
+    expect(response.statusCode, 201);
+  });
+
+  test('maps unsuccessful backend envelopes to ApiException', () async {
+    final dio = Dio();
+    final client = DioApiClient(
+      dio: dio,
+      tokenProvider: const StaticApiTokenProvider(null),
+    );
+    dio.interceptors.add(
+      _ResolveInterceptor(
+        (options) => Response<Object?>(
+          requestOptions: options,
+          statusCode: 200,
+          data: {
+            'success': false,
+            'message': 'Invalid Credentials.',
+            'traceId': '29ee8a79-614e-49e5-ba04-eef4cf027465',
+          },
+        ),
+      ),
+    );
+
+    await expectLater(
+      client.request<void>(
+        const ApiRequestConfig(
+          method: HttpMethod.post,
+          path: '/auth/login',
+          requiresAuth: false,
+        ),
+      ),
+      throwsA(
+        isA<ApiException>()
+            .having((error) => error.message, 'message', 'Invalid Credentials.')
+            .having((error) => error.statusCode, 'statusCode', 200),
+      ),
+    );
   });
 
   test('request-specific headers can intentionally override auth', () async {

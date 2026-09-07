@@ -209,7 +209,7 @@ class AppRouter {
           name: AppRouteNames.account,
           pageBuilder: (context, state) => shipKiaPage<void>(
             state: state,
-            child: AccountScreen(onSignOut: authController.signOut),
+            child: AccountScreen(onSignOut: authController.logout),
           ),
         ),
         GoRoute(

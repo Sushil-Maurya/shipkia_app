@@ -97,6 +97,7 @@ class DioApiClient implements ApiClient {
           Headers.acceptHeader: Headers.jsonContentType,
           ...?commonHeaders,
         },
+        extra: const {'withCredentials': true},
       ),
     );
   }
@@ -130,6 +131,9 @@ class DioApiClient implements ApiClient {
         final apiResponse = _parseResponse<T>(response, fromJson);
         _showSuccessFeedback(config, apiResponse);
         return apiResponse;
+      } on ApiException catch (exception) {
+        _showErrorFeedback(config, exception);
+        rethrow;
       } on DioException catch (error) {
         final exception = ApiExceptionMapper.fromDio(error);
         if (_shouldRetry(config, exception, attempt)) {
@@ -155,6 +159,7 @@ class DioApiClient implements ApiClient {
       sendTimeout: config.sendTimeout,
       receiveTimeout: config.receiveTimeout,
       extra: {
+        'withCredentials': true,
         ...?config.extra,
         _requiresAuthExtraKey: config.requiresAuth,
         if (config.headers != null) _requestHeadersExtraKey: config.headers,
@@ -166,14 +171,48 @@ class DioApiClient implements ApiClient {
     Response<Object?> response,
     ApiJsonParser<T>? fromJson,
   ) {
-    final data = response.data;
-    final parsed = _parseData<T>(data, fromJson);
+    final envelope = _unwrapEnvelope(response.data, response.statusCode);
+    final parsed = _parseData<T>(envelope.data, fromJson);
     return ApiResponse<T>(
       data: parsed,
       statusCode: response.statusCode,
-      message: _messageFrom(data),
+      message: envelope.message,
       headers: response.headers.map,
     );
+  }
+
+  ({Object? data, String? message}) _unwrapEnvelope(
+    Object? data,
+    int? httpStatusCode,
+  ) {
+    if (data is! Map) return (data: data, message: null);
+
+    final json = Map<String, dynamic>.from(data);
+    final message = _messageFrom(json);
+    if (json.containsKey('statusCode') && json.containsKey('result')) {
+      final statusCode = _intFrom(json['statusCode']) ?? httpStatusCode;
+      if (statusCode != null && statusCode >= 400) {
+        throw ApiExceptionMapper.fromEnvelope(
+          data: json,
+          statusCode: statusCode,
+          message: message,
+        );
+      }
+      return (data: json['result'], message: message);
+    }
+
+    if (json.containsKey('success')) {
+      if (json['success'] == false) {
+        throw ApiExceptionMapper.fromEnvelope(
+          data: json,
+          statusCode: httpStatusCode,
+          message: message,
+        );
+      }
+      return (data: json['result'], message: message);
+    }
+
+    return (data: data, message: message);
   }
 
   T? _parseData<T>(Object? data, ApiJsonParser<T>? fromJson) {
@@ -192,6 +231,12 @@ class DioApiClient implements ApiClient {
       final value = data['message'];
       if (value is String && value.trim().isNotEmpty) return value;
     }
+    return null;
+  }
+
+  int? _intFrom(Object? value) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
     return null;
   }
 
