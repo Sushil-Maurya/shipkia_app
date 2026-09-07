@@ -13,6 +13,7 @@ enum ShipKiaApiFailureType {
   timeout,
   conflict,
   rateLimited,
+  cancelled,
   server,
   network,
   unknown,
@@ -86,6 +87,7 @@ class ShipKiaFeedbackMapper {
               'This shipment was updated elsewhere. Refresh and try again.',
             ShipKiaApiFailureType.rateLimited =>
               'Too many requests. Please wait a moment.',
+            ShipKiaApiFailureType.cancelled => 'The request was cancelled.',
             ShipKiaApiFailureType.server =>
               'Something went wrong on our server. Please try again.',
             ShipKiaApiFailureType.network =>
