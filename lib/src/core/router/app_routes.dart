@@ -20,8 +20,14 @@ abstract final class AppRoutes {
     AppRoutePaths.splash,
     AppRoutePaths.login,
     AppRoutePaths.signUp,
+    AppRoutePaths.signUpWeb,
+    AppRoutePaths.signUpEmbed,
+    AppRoutePaths.loginEmbed,
+    AppRoutePaths.commit,
+    AppRoutePaths.onboardingWelcome,
     AppRoutePaths.forgotPassword,
     AppRoutePaths.resetPassword,
+    AppRoutePaths.updatePasswordWeb,
     AppRoutePaths.registerVerify,
   };
 
@@ -35,6 +41,26 @@ abstract final class AppRoutes {
     AppRoutePaths.wallet,
     AppRoutePaths.more,
     AppRoutePaths.account,
+    AppRoutePaths.help,
+    AppRoutePaths.settings,
+    AppRoutePaths.tools,
+    AppRoutePaths.remittance,
+    AppRoutePaths.channels,
+    AppRoutePaths.returns,
+    AppRoutePaths.pickupAndManifest,
+    AppRoutePaths.deliveryAttempt,
+    AppRoutePaths.weightDispute,
+    AppRoutePaths.weightDisputeDetails,
+    AppRoutePaths.walletTransactions,
+    AppRoutePaths.wallets,
+    AppRoutePaths.supportTicket,
+    AppRoutePaths.orderDetailsWeb,
+    AppRoutePaths.returnOrderDetails,
+    AppRoutePaths.pickupAndManifestDetails,
+    AppRoutePaths.scheduledDeliveryAction,
+    AppRoutePaths.customers,
+    AppRoutePaths.quotations,
+    AppRoutePaths.invoice,
   };
 
   static const routeMeta = <String, AppRouteMeta>{
@@ -56,4 +82,3 @@ abstract final class AppRoutes {
     ),
   };
 }
-

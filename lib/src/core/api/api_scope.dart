@@ -12,9 +12,15 @@ class ShipKiaApiScope extends InheritedWidget {
   final ApiClient apiClient;
 
   static ApiClient of(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<ShipKiaApiScope>();
+    final scope = maybeOf(context);
     assert(scope != null, 'ShipKiaApiScope was not found in the widget tree.');
-    return scope!.apiClient;
+    return scope!;
+  }
+
+  static ApiClient? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<ShipKiaApiScope>()
+        ?.apiClient;
   }
 
   @override

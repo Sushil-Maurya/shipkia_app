@@ -1,11 +1,15 @@
 class AuthSession {
   const AuthSession({
     required this.session,
+    this.accessToken,
+    this.refreshToken,
     this.permissions = const <String>{},
     this.rawData,
   });
 
   final String session;
+  final String? accessToken;
+  final String? refreshToken;
   final Set<String> permissions;
   final Map<String, dynamic>? rawData;
 
@@ -30,6 +34,16 @@ class AuthSession {
 
     return AuthSession(
       session: token,
+      accessToken: _stringValue(source, const [
+        'access_token',
+        'accessToken',
+        'token',
+        'authToken',
+      ]),
+      refreshToken: _stringValue(source, const [
+        'refresh_token',
+        'refreshToken',
+      ]),
       permissions: _permissionsFrom(source['permissions']),
       rawData: json,
     );
@@ -39,14 +53,16 @@ class AuthSession {
 class AuthToken {
   const AuthToken({
     required this.accessToken,
-    required this.session,
-    this.expiresIn,
+    this.session,
+    this.refreshToken,
+    this.expiresAt,
     this.rawData,
   });
 
   final String accessToken;
-  final String session;
-  final String? expiresIn;
+  final String? session;
+  final String? refreshToken;
+  final String? expiresAt;
   final Map<String, dynamic>? rawData;
 
   factory AuthToken.fromJson(dynamic data) {
@@ -59,23 +75,21 @@ class AuthToken {
     final json = Map<String, dynamic>.from(data);
     final source = _payloadJson(json);
     final accessToken = _stringValue(source, const ['access_token']);
-    final session = _stringValue(source, const ['session']);
 
     if (accessToken == null || accessToken.trim().isEmpty) {
       throw const FormatException(
         'Token renew response did not include an access token.',
       );
     }
-    if (session == null || session.trim().isEmpty) {
-      throw const FormatException(
-        'Token renew response did not include a session.',
-      );
-    }
 
     return AuthToken(
       accessToken: accessToken,
-      session: session,
-      expiresIn: _stringValue(source, const ['expires_in']),
+      session: _stringValue(source, const ['session']),
+      refreshToken: _stringValue(source, const [
+        'refresh_token',
+        'refreshToken',
+      ]),
+      expiresAt: _stringValue(source, const ['expires_at', 'expires_in']),
       rawData: json,
     );
   }

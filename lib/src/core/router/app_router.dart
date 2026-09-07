@@ -7,6 +7,7 @@ import '../../features/auth/login_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/more/more_screen.dart';
+import '../../features/modules/web_module_screen.dart';
 import '../../features/ndr/ndr_screen.dart';
 import '../../features/orders/order_detail_screen.dart';
 import '../../features/orders/orders_screen.dart';
@@ -21,6 +22,7 @@ import 'route_error_screen.dart';
 import 'route_guards.dart';
 import 'route_state_reader.dart';
 import 'route_transitions.dart';
+import 'web_module_catalog.dart';
 
 class AppRouter {
   AppRouter({
@@ -62,6 +64,46 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: AppRoutePaths.signUpWeb,
+          pageBuilder: (context, state) => shipKiaPage<void>(
+            state: state,
+            transition: AppRouteTransitionType.modal,
+            child: const SignUpScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutePaths.signUpEmbed,
+          pageBuilder: (context, state) => shipKiaPage<void>(
+            state: state,
+            transition: AppRouteTransitionType.modal,
+            child: const SignUpScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutePaths.loginEmbed,
+          pageBuilder: (context, state) => shipKiaPage<void>(
+            state: state,
+            transition: AppRouteTransitionType.fade,
+            child: const LoginScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutePaths.commit,
+          pageBuilder: (context, state) => shipKiaPage<void>(
+            state: state,
+            transition: AppRouteTransitionType.modal,
+            child: const SignUpScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutePaths.onboardingWelcome,
+          pageBuilder: (context, state) => shipKiaPage<void>(
+            state: state,
+            transition: AppRouteTransitionType.fade,
+            child: const SignUpScreen(),
+          ),
+        ),
+        GoRoute(
           path: AppRoutePaths.forgotPassword,
           name: AppRouteNames.forgotPassword,
           pageBuilder: (context, state) => shipKiaPage<void>(
@@ -73,6 +115,14 @@ class AppRouter {
         GoRoute(
           path: AppRoutePaths.resetPassword,
           name: AppRouteNames.resetPassword,
+          pageBuilder: (context, state) => shipKiaPage<void>(
+            state: state,
+            transition: AppRouteTransitionType.modal,
+            child: const UpdatePasswordScreen(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutePaths.updatePasswordWeb,
           pageBuilder: (context, state) => shipKiaPage<void>(
             state: state,
             transition: AppRouteTransitionType.modal,
@@ -212,6 +262,25 @@ class AppRouter {
             child: AccountScreen(onSignOut: authController.logout),
           ),
         ),
+        for (final route in WebModuleCatalog.allRoutes)
+          GoRoute(
+            path: route.path,
+            pageBuilder: (context, state) => shipKiaPage<void>(
+              state: state,
+              child: WebModuleScreen(route: route),
+            ),
+            routes: route.kind == WebModuleKind.list
+                ? [
+                    GoRoute(
+                      path: ':name',
+                      pageBuilder: (context, state) => shipKiaPage<void>(
+                        state: state,
+                        child: WebModuleScreen(route: route),
+                      ),
+                    ),
+                  ]
+                : const <RouteBase>[],
+          ),
         GoRoute(
           path: AppRoutePaths.notAuthorized,
           name: AppRouteNames.notAuthorized,

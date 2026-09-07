@@ -1,5 +1,6 @@
 export 'api_client.dart';
 export 'api_routes.dart';
+export 'api_scope.dart';
 export 'environment_config.dart';
 export 'api_exception.dart';
 export 'api_request_config.dart';
@@ -7,6 +8,7 @@ export 'api_response.dart';
 export 'api_token_provider.dart';
 export 'endpoints/api_endpoints.dart';
 export 'endpoints/auth.dart';
+export 'endpoints/dashboard.dart';
 export 'endpoints/ndr.dart';
 export 'endpoints/orders.dart';
 export 'endpoints/profile.dart';

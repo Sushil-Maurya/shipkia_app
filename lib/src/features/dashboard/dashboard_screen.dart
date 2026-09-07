@@ -1,12 +1,57 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../core/api/api.dart';
 import '../../data/shipkia_mock_data.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _requestedLiveData = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_requestedLiveData) return;
+    final apiClient = ShipKiaApiScope.maybeOf(context);
+    if (apiClient == null) return;
+    _requestedLiveData = true;
+    unawaited(_loadLiveData(apiClient));
+  }
+
+  Future<void> _loadLiveData(ApiClient apiClient) async {
+    await Future.wait<Object?>([
+      _silentGet(apiClient, ApiEndpoints.dashboard.metrics),
+      _silentGet(apiClient, ApiEndpoints.dashboard.ordersOverview),
+      _silentGet(apiClient, ApiEndpoints.dashboard.ndrOverview),
+      _silentGet(apiClient, ApiEndpoints.dashboard.shipmentOverview),
+      _silentGet(apiClient, ApiEndpoints.dashboard.orderConfirmationOverview),
+    ]);
+  }
+
+  Future<Object?> _silentGet(ApiClient apiClient, String path) async {
+    try {
+      return await apiClient.request<Object?>(
+        ApiRequestConfig(
+          method: HttpMethod.get,
+          path: path,
+          showSuccessMessage: false,
+          showErrorMessage: false,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

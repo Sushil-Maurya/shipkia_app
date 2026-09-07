@@ -27,7 +27,7 @@ class AuthRepository {
         path: ApiEndpoints.auth.logout,
         showSuccessMessage: true,
         successMessage: 'Logged out successfully.',
-        showErrorMessage: true,
+        showErrorMessage: false,
       ),
     );
   }
@@ -37,21 +37,20 @@ class AuthRepository {
       ApiRequestConfig(
         method: HttpMethod.post,
         path: ApiEndpoints.auth.tokenRenew,
+        requiresAuth: false,
         showSuccessMessage: false,
         showErrorMessage: false,
+        extra: const {'_shipkiaSkipTokenRefresh': true},
       ),
       fromJson: AuthToken.fromJson,
     );
   }
 
-  Future<AuthProfile> getProfile({String? accessToken}) {
+  Future<AuthProfile> getProfile() {
     return _apiClient.request<AuthProfile>(
       ApiRequestConfig(
         method: HttpMethod.get,
         path: ApiEndpoints.profile.current,
-        headers: accessToken == null
-            ? null
-            : {'Authorization': 'Bearer $accessToken'},
         showSuccessMessage: false,
         showErrorMessage: false,
       ),

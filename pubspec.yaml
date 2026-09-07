@@ -36,6 +36,10 @@ dependencies:
   flutter_dotenv: ^6.0.1
   flutter_svg: ^2.2.0
   go_router: ^18.0.0
+  flutter_secure_storage: ^11.0.0
+  cookie_jar: ^4.0.9
+  dio_cookie_manager: ^3.5.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

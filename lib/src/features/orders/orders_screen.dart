@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../core/api/api.dart';
 import '../../core/router/navigation_service.dart';
 import '../../core/router/route_state_reader.dart';
 import '../../data/shipkia_mock_data.dart';
@@ -8,20 +11,72 @@ import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_shell_widgets.dart';
 import '../../widgets/shipkia_widgets.dart';
 
-class OrdersScreen extends StatelessWidget {
+class OrdersScreen extends StatefulWidget {
   const OrdersScreen({this.query = const OrdersRouteQuery(), super.key});
 
   final OrdersRouteQuery query;
 
   @override
+  State<OrdersScreen> createState() => _OrdersScreenState();
+}
+
+class _OrdersScreenState extends State<OrdersScreen> {
+  String? _lastRequestKey;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(OrdersScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadIfNeeded();
+  }
+
+  void _loadIfNeeded() {
+    final apiClient = ShipKiaApiScope.maybeOf(context);
+    if (apiClient == null) return;
+    final key =
+        '${widget.query.status}|${widget.query.search}|${widget.query.sort}';
+    if (_lastRequestKey == key) return;
+    _lastRequestKey = key;
+    unawaited(_loadLiveOrders(apiClient));
+  }
+
+  Future<void> _loadLiveOrders(ApiClient apiClient) async {
+    final params = <String, dynamic>{
+      if (widget.query.status != null) 'status': widget.query.status,
+      if (widget.query.search?.isNotEmpty == true)
+        'search': widget.query.search,
+      'sort': widget.query.sort,
+    };
+
+    try {
+      await apiClient.request<Object?>(
+        ApiRequestConfig(
+          method: HttpMethod.get,
+          path: ApiEndpoints.orders.list,
+          params: params,
+          showSuccessMessage: false,
+          showErrorMessage: false,
+        ),
+      );
+    } catch (_) {
+      return;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final selectedStatus = query.status;
+    final selectedStatus = widget.query.status;
 
     return Column(
       children: [
         ShipKiaCommandBar(
-          hint: query.search?.isNotEmpty == true
-              ? query.search!
+          hint: widget.query.search?.isNotEmpty == true
+              ? widget.query.search!
               : 'Search by order, AWB, customer',
           trailing: AppButton(label: 'Add', icon: Icons.add, onPressed: () {}),
         ),
@@ -64,7 +119,7 @@ class OrdersScreen extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                '${orders.length} records - ${query.sort}',
+                '${orders.length} records - ${widget.query.sort}',
                 style: Theme.of(context).textTheme.labelSmall
                     ?.copyWith(color: ShipKiaColors.mutedInk),
               ),

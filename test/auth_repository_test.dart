@@ -18,6 +18,9 @@ void main() {
         return Response<Object?>(
           requestOptions: options,
           statusCode: 200,
+          headers: Headers.fromMap({
+            'set-cookie': ['refresh_token=refresh-123; Path=/; HttpOnly'],
+          }),
           data: {
             'success': true,
             'message': 'Login successfull.',
@@ -98,11 +101,10 @@ void main() {
               },
               '/auth/token/renew' => {
                 'success': true,
-                'message': 'Token renewed.',
+                'message': 'Access token generated successfully.',
                 'result': {
                   'access_token': 'access-token',
-                  'session': 'renewed-session-token',
-                  'expires_in': '3600',
+                  'expires_at': '2026-09-07T11:40:12.860Z',
                 },
               },
               '/auth/users/profile' => {
@@ -131,7 +133,7 @@ void main() {
       await controller.login(email: 'ops@shipkia.com', password: 'secret');
 
       expect(controller.isAuthenticated, isTrue);
-      expect(tokenProvider.sessionId, 'renewed-session-token');
+      expect(tokenProvider.sessionId, 'session-token');
       expect(await tokenProvider.getAccessToken(), 'access-token');
       expect(controller.profile?.email, 'ada@example.com');
       expect(controller.profile?.name, 'Ada Lovelace');
@@ -143,6 +145,93 @@ void main() {
       expect(await tokenProvider.getAccessToken(), isNull);
     },
   );
+
+  test(
+    'auth controller expires login when token renew cannot create access token',
+    () async {
+      final tokenProvider = InMemoryApiTokenProvider();
+      final requestedPaths = <String>[];
+      final dio = Dio(BaseOptions(baseUrl: 'http://api.shipkia.lcl'));
+      final controller = ShipKiaAuthController(
+        authRepository: AuthRepository(
+          DioApiClient(dio: dio, tokenProvider: tokenProvider),
+        ),
+        tokenProvider: tokenProvider,
+        initialStatus: ShipKiaAuthStatus.unauthenticated,
+        restoreDelay: Duration.zero,
+      );
+      addTearDown(controller.dispose);
+      dio.interceptors.add(
+        _ResolveInterceptor((options) {
+          requestedPaths.add(options.path);
+
+          return Response<Object?>(
+            requestOptions: options,
+            statusCode: 200,
+            data: switch (options.path) {
+              '/auth/login' => {
+                'success': true,
+                'message': 'Login successfull.',
+                'result': {'session': 'session-token'},
+              },
+              '/auth/token/renew' => {
+                'success': false,
+                'message': 'Token renewal failed',
+              },
+              '/auth/users/profile' => {
+                'success': false,
+                'message': 'Profile fetch failed',
+              },
+              _ => {'success': false, 'message': 'Unexpected endpoint'},
+            },
+          );
+        }),
+      );
+
+      await controller.login(email: 'ops@shipkia.com', password: 'secret');
+
+      expect(controller.isAuthenticated, isFalse);
+      expect(tokenProvider.sessionId, isNull);
+      expect(await tokenProvider.getAccessToken(), isNull);
+      expect(requestedPaths, [
+        ApiEndpoints.auth.login,
+        ApiEndpoints.auth.tokenRenew,
+      ]);
+    },
+  );
+
+  test('auth controller clears local state when logout api fails', () async {
+    final tokenProvider = InMemoryApiTokenProvider()
+      ..setAccessToken('access-token')
+      ..setSessionId('session-token');
+    await tokenProvider.saveRefreshToken('refresh-token');
+    final dio = Dio(BaseOptions(baseUrl: 'http://api.shipkia.lcl'));
+    final controller = ShipKiaAuthController(
+      authRepository: AuthRepository(
+        DioApiClient(dio: dio, tokenProvider: tokenProvider),
+      ),
+      tokenProvider: tokenProvider,
+      initialStatus: ShipKiaAuthStatus.authenticated,
+      restoreDelay: Duration.zero,
+    );
+    addTearDown(controller.dispose);
+    dio.interceptors.add(
+      _ResolveInterceptor(
+        (options) => Response<Object?>(
+          requestOptions: options,
+          statusCode: 200,
+          data: {'success': false, 'message': 'Unauthorized'},
+        ),
+      ),
+    );
+
+    await controller.logout();
+
+    expect(controller.isAuthenticated, isFalse);
+    expect(tokenProvider.sessionId, isNull);
+    expect(await tokenProvider.getAccessToken(), isNull);
+    expect(await tokenProvider.getRefreshToken(), isNull);
+  });
 
   test('auth session parser accepts nested data payloads', () {
     final session = AuthSession.fromJson({

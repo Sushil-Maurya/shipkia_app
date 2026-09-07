@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipkia_app/src/core/api/api.dart';
@@ -184,6 +187,185 @@ void main() {
     expect(captured.headers.containsKey('Authorization'), isFalse);
   });
 
+  test('captures refresh token from Set-Cookie responses', () async {
+    final tokenProvider = InMemoryApiTokenProvider();
+    final dio = Dio();
+    dio.httpClientAdapter = _MockAdapter(
+      (options) => ResponseBody.fromString(
+        jsonEncode({
+          'success': true,
+          'result': {'session': 'session-123'},
+        }),
+        201,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+          'set-cookie': ['refresh_token=refresh-123; Path=/; HttpOnly'],
+        },
+      ),
+    );
+    final client = DioApiClient(dio: dio, tokenProvider: tokenProvider);
+
+    await client.request<String>(
+      const ApiRequestConfig(
+        method: HttpMethod.post,
+        path: '/auth/login',
+        requiresAuth: false,
+      ),
+      fromJson: (data) => (data as Map<String, dynamic>)['session'] as String,
+    );
+
+    expect(await tokenProvider.getRefreshToken(), 'refresh-123');
+  });
+
+  test(
+    'protected requests use access token and refresh cookie separately',
+    () async {
+      late RequestOptions captured;
+      final tokenProvider = InMemoryApiTokenProvider()
+        ..setAccessToken('access-token');
+      await tokenProvider.saveRefreshToken('refresh-token');
+      final dio = Dio();
+      final client = DioApiClient(dio: dio, tokenProvider: tokenProvider);
+      dio.interceptors.add(
+        _ResolveInterceptor((options) {
+          captured = options;
+          return Response<Object?>(
+            requestOptions: options,
+            statusCode: 200,
+            data: {
+              'success': true,
+              'result': {'ok': true},
+            },
+          );
+        }),
+      );
+
+      final result = await client.request<Map<String, dynamic>>(
+        const ApiRequestConfig(
+          method: HttpMethod.get,
+          path: '/auth/users/profile',
+        ),
+      );
+
+      expect(result, {'ok': true});
+      expect(captured.headers['Authorization'], 'Bearer access-token');
+      expect(captured.headers['Cookie'], 'refresh_token=refresh-token');
+    },
+  );
+
+  test(
+    '401 responses renew access token with cookie and retry request',
+    () async {
+      final tokenProvider = InMemoryApiTokenProvider()
+        ..setAccessToken('expired-access');
+      await tokenProvider.saveRefreshToken('refresh-token');
+      final dio = Dio(BaseOptions(baseUrl: 'http://api.shipkia.lcl'));
+      final adapter = _MockAdapter((options) {
+        if (options.path == '/auth/token/renew') {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'success': true,
+              'message': 'Access token generated successfully.',
+              'result': {
+                'access_token': 'new-access-token',
+                'expires_at': '2026-09-07T11:40:12.860Z',
+              },
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
+        if (options.headers['Authorization'] == 'Bearer new-access-token') {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'success': true,
+              'result': {'ok': true},
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
+        return ResponseBody.fromString(
+          jsonEncode({'success': false, 'message': 'Unauthorized'}),
+          401,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      });
+      dio.httpClientAdapter = adapter;
+      final client = DioApiClient(dio: dio, tokenProvider: tokenProvider);
+
+      final result = await client.request<Map<String, dynamic>>(
+        const ApiRequestConfig(method: HttpMethod.get, path: '/orders'),
+      );
+
+      expect(result, {'ok': true});
+      expect(await tokenProvider.getAccessToken(), 'new-access-token');
+      expect(adapter.requests.map((options) => options.path), [
+        '/orders',
+        '/auth/token/renew',
+        '/orders',
+      ]);
+      final renew = adapter.requests[1];
+      expect(renew.data, isNull);
+      expect(renew.headers.containsKey('Authorization'), isFalse);
+      expect(renew.headers['Cookie'], 'refresh_token=refresh-token');
+      expect(
+        adapter.requests.last.headers['Authorization'],
+        'Bearer new-access-token',
+      );
+    },
+  );
+
+  test('failed token renew expires local credentials', () async {
+    var expired = false;
+    final tokenProvider = InMemoryApiTokenProvider()
+      ..setAccessToken('expired-access')
+      ..setSessionId('session-token');
+    await tokenProvider.saveRefreshToken('refresh-token');
+    final dio = Dio(BaseOptions(baseUrl: 'http://api.shipkia.lcl'));
+    dio.httpClientAdapter = _MockAdapter((options) {
+      if (options.path == '/auth/token/renew') {
+        return ResponseBody.fromString(
+          jsonEncode({'success': false, 'message': 'Invalid refresh token'}),
+          400,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      }
+      return ResponseBody.fromString(
+        jsonEncode({'success': false, 'message': 'Unauthorized'}),
+        401,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    });
+    final client = DioApiClient(
+      dio: dio,
+      tokenProvider: tokenProvider,
+      onSessionExpired: () => expired = true,
+    );
+
+    await expectLater(
+      client.request<void>(
+        const ApiRequestConfig(method: HttpMethod.get, path: '/orders'),
+      ),
+      throwsA(isA<ApiException>()),
+    );
+
+    expect(expired, isTrue);
+    expect(await tokenProvider.getAccessToken(), isNull);
+    expect(await tokenProvider.getSessionId(), isNull);
+    expect(await tokenProvider.getRefreshToken(), isNull);
+  });
+
   test('requestResponse exposes wrapper metadata', () async {
     final dio = Dio();
     final client = DioApiClient(
@@ -360,4 +542,24 @@ class _RecordingFeedbackHandler implements ApiFeedbackHandler {
   void success(String message, {String? eventKey}) {
     successMessages.add(message);
   }
+}
+
+class _MockAdapter implements HttpClientAdapter {
+  _MockAdapter(this.respond);
+
+  final ResponseBody Function(RequestOptions options) respond;
+  final requests = <RequestOptions>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requests.add(options);
+    return respond(options);
+  }
+
+  @override
+  void close({bool force = false}) {}
 }

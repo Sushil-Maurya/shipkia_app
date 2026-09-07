@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shipkia_app/src/core/auth/shipkia_auth_controller.dart';
 import 'package:shipkia_app/src/core/auth/shipkia_auth_scope.dart';
 import 'package:shipkia_app/src/core/router/app_router.dart';
+import 'package:shipkia_app/src/features/auth/login_screen.dart';
 import 'package:shipkia_app/src/theme/shipkia_theme.dart';
 
 void main() {
@@ -23,6 +24,23 @@ void main() {
 
     expect(find.text('Dispatch Console'), findsWidgets);
     expect(find.text('Login to ShipKia'), findsNothing);
+  });
+
+  testWidgets('React auth route aliases open public auth screens', (
+    tester,
+  ) async {
+    final auth = _auth(ShipKiaAuthStatus.unauthenticated);
+    await tester.pumpWidget(_routerApp(auth, initialLocation: '/signup'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SignUpScreen), findsOneWidget);
+
+    await tester.pumpWidget(
+      _routerApp(auth, initialLocation: '/update-password'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(UpdatePasswordScreen), findsOneWidget);
   });
 
   testWidgets('protected routes redirect to login and restore after sign in', (
@@ -52,10 +70,32 @@ void main() {
     expect(find.text('ORD-10491'), findsOneWidget);
   });
 
+  testWidgets('authenticated users can open web module routes', (tester) async {
+    final auth = _auth(ShipKiaAuthStatus.authenticated);
+    await tester.pumpWidget(
+      _routerApp(auth, initialLocation: '/return_orders'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Returns'), findsWidgets);
+    expect(find.text('API route connected'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _routerApp(auth, initialLocation: '/settings/products'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Products'), findsWidgets);
+    expect(find.text('API route connected'), findsOneWidget);
+  });
+
   testWidgets('missing permission redirects to forbidden screen', (
     tester,
   ) async {
-    final auth = _auth(ShipKiaAuthStatus.authenticated, permissions: <String>{});
+    final auth = _auth(
+      ShipKiaAuthStatus.authenticated,
+      permissions: <String>{},
+    );
     await tester.pumpWidget(_routerApp(auth, initialLocation: '/orders'));
     await tester.pumpAndSettle();
 

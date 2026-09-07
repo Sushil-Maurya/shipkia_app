@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../feedback/feedback_mapper.dart';
 import '../feedback/shipkia_feedback.dart';
@@ -6,10 +7,12 @@ import 'api_exception.dart';
 import 'api_request_config.dart';
 import 'api_response.dart';
 import 'api_token_provider.dart';
+import 'endpoints/auth.dart';
 import 'environment_config.dart';
 import 'network_config.dart';
 
 typedef ApiJsonParser<T> = T Function(dynamic data);
+typedef SessionExpiredCallback = void Function();
 
 abstract interface class ApiClient {
   Future<T> request<T>(ApiRequestConfig config, {ApiJsonParser<T>? fromJson});
@@ -60,6 +63,7 @@ class DioApiClient implements ApiClient {
     Dio? dio,
     required ApiTokenProvider tokenProvider,
     ApiFeedbackHandler? feedbackHandler,
+    SessionExpiredCallback? onSessionExpired,
     Map<String, dynamic>? commonHeaders,
     NetworkConfig? networkConfig,
     Duration? connectTimeout,
@@ -73,11 +77,19 @@ class DioApiClient implements ApiClient {
              receiveTimeout: receiveTimeout,
            ),
        _feedbackHandler = feedbackHandler ?? const ShipKiaApiFeedbackHandler() {
-    _dio.interceptors.add(_AuthHeaderInterceptor(tokenProvider));
+    _dio.interceptors.add(
+      _AuthInterceptor(
+        dio: _dio,
+        tokenProvider: tokenProvider,
+        onSessionExpired: onSessionExpired,
+      ),
+    );
   }
 
   static const _requestHeadersExtraKey = '_shipkiaRequestHeaders';
   static const _requiresAuthExtraKey = '_shipkiaRequiresAuth';
+  static const _skipTokenRefreshExtraKey = '_shipkiaSkipTokenRefresh';
+  static const _hasRetriedAuthExtraKey = '_shipkiaHasRetriedAuth';
 
   final Dio _dio;
   final ApiFeedbackHandler? _feedbackHandler;
@@ -162,6 +174,8 @@ class DioApiClient implements ApiClient {
         'withCredentials': true,
         ...?config.extra,
         _requiresAuthExtraKey: config.requiresAuth,
+        _skipTokenRefreshExtraKey:
+            config.extra?[_skipTokenRefreshExtraKey] == true,
         if (config.headers != null) _requestHeadersExtraKey: config.headers,
       },
     );
@@ -283,10 +297,19 @@ class DioApiClient implements ApiClient {
   }
 }
 
-class _AuthHeaderInterceptor extends Interceptor {
-  _AuthHeaderInterceptor(this._tokenProvider);
+class _AuthInterceptor extends QueuedInterceptor {
+  _AuthInterceptor({
+    required Dio dio,
+    required ApiTokenProvider tokenProvider,
+    SessionExpiredCallback? onSessionExpired,
+  }) : this._(dio, tokenProvider, onSessionExpired);
 
+  _AuthInterceptor._(this._dio, this._tokenProvider, this._onSessionExpired);
+
+  final Dio _dio;
   final ApiTokenProvider _tokenProvider;
+  final SessionExpiredCallback? _onSessionExpired;
+  Future<String?>? _refreshInFlight;
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -296,6 +319,50 @@ class _AuthHeaderInterceptor extends Interceptor {
         handler.reject(
           DioException(
             requestOptions: options,
+            error: error,
+            stackTrace: stackTrace,
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    _captureRefreshCookie(response.headers).then(
+      (_) => handler.next(response),
+      onError: (Object error, StackTrace stackTrace) {
+        handler.reject(
+          DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            error: error,
+            stackTrace: stackTrace,
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    _handleUnauthorized(err).then(
+      (response) {
+        if (response == null) {
+          handler.next(err);
+        } else {
+          handler.resolve(response);
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (error is DioException) {
+          handler.next(error);
+          return;
+        }
+        handler.next(
+          DioException(
+            requestOptions: err.requestOptions,
+            response: err.response,
             error: error,
             stackTrace: stackTrace,
           ),
@@ -317,6 +384,14 @@ class _AuthHeaderInterceptor extends Interceptor {
       }
     }
 
+    final refreshToken = await _tokenProvider.getRefreshToken();
+    if (!kIsWeb && refreshToken != null && refreshToken.trim().isNotEmpty) {
+      headers['Cookie'] = _cookieHeaderWithRefreshToken(
+        headers['Cookie'],
+        refreshToken,
+      );
+    }
+
     if (requestHeaders is Map<String, dynamic>) {
       headers.addAll(requestHeaders);
     }
@@ -324,5 +399,190 @@ class _AuthHeaderInterceptor extends Interceptor {
     options.headers
       ..clear()
       ..addAll(headers);
+  }
+
+  Future<Response<Object?>?> _handleUnauthorized(DioException error) async {
+    final response = error.response;
+    final options = error.requestOptions;
+    if (response?.statusCode != 401) return null;
+    if (options.extra[DioApiClient._requiresAuthExtraKey] == false) {
+      return null;
+    }
+    if (options.extra[DioApiClient._skipTokenRefreshExtraKey] == true) {
+      await _expireSession();
+      return null;
+    }
+    if (options.extra[DioApiClient._hasRetriedAuthExtraKey] == true) {
+      await _expireSession();
+      return null;
+    }
+
+    final accessToken = await _refreshToken();
+    if (accessToken == null || accessToken.trim().isEmpty) {
+      await _expireSession();
+      return null;
+    }
+
+    final retryOptions = _copyForRetry(options);
+    retryOptions.extra[DioApiClient._hasRetriedAuthExtraKey] = true;
+    retryOptions.headers['Authorization'] = 'Bearer $accessToken';
+    return _dio.fetch<Object?>(retryOptions);
+  }
+
+  Future<String?> _refreshToken() {
+    final current = _refreshInFlight;
+    if (current != null) return current;
+    final refresh = _renewAccessToken().whenComplete(() {
+      _refreshInFlight = null;
+    });
+    _refreshInFlight = refresh;
+    return refresh;
+  }
+
+  Future<String?> _renewAccessToken() async {
+    try {
+      final renewDio = Dio(
+        BaseOptions(
+          baseUrl: _dio.options.baseUrl,
+          connectTimeout: _dio.options.connectTimeout,
+          sendTimeout: _dio.options.sendTimeout,
+          receiveTimeout: _dio.options.receiveTimeout,
+          headers: await _renewHeaders(),
+          responseType: ResponseType.json,
+          contentType: _dio.options.contentType,
+          validateStatus: _dio.options.validateStatus,
+          extra: const {'withCredentials': true},
+        ),
+      )..httpClientAdapter = _dio.httpClientAdapter;
+      final response = await renewDio.request<Object?>(
+        AuthEndpoints.tokenRenew,
+        options: Options(method: 'POST'),
+      );
+      await _captureRefreshCookie(response.headers);
+      final data = _unwrapCredentialPayload(response.data);
+      final accessToken = _stringValue(data, const ['access_token']);
+      final session = _stringValue(data, const ['session']);
+      final refreshToken = _stringValue(data, const [
+        'refresh_token',
+        'refreshToken',
+      ]);
+
+      if (accessToken == null || accessToken.trim().isEmpty) return null;
+      await _tokenProvider.saveAccessToken(accessToken);
+      if (session != null && session.trim().isNotEmpty) {
+        await _tokenProvider.saveSessionId(session);
+      }
+      if (refreshToken != null && refreshToken.trim().isNotEmpty) {
+        await _tokenProvider.saveRefreshToken(refreshToken);
+      }
+      return accessToken;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> _renewHeaders() async {
+    final headers = Map<String, dynamic>.of(_dio.options.headers)
+      ..remove('Authorization')
+      ..remove('authorization');
+    final refreshToken = await _tokenProvider.getRefreshToken();
+    if (!kIsWeb && refreshToken != null && refreshToken.trim().isNotEmpty) {
+      headers['Cookie'] = _cookieHeaderWithRefreshToken(
+        headers['Cookie'],
+        refreshToken,
+      );
+    }
+
+    return headers;
+  }
+
+  Future<void> _captureRefreshCookie(Headers headers) async {
+    final values = headers.map['set-cookie'] ?? headers.map['Set-Cookie'];
+    if (values == null) return;
+
+    for (final value in values) {
+      final refreshToken = _refreshTokenFromSetCookie(value);
+      if (refreshToken == null) continue;
+      if (refreshToken.isEmpty) {
+        await _tokenProvider.clearRefreshToken();
+      } else {
+        await _tokenProvider.saveRefreshToken(refreshToken);
+      }
+    }
+  }
+
+  Future<void> _expireSession() async {
+    await _tokenProvider.clear();
+    _onSessionExpired?.call();
+  }
+
+  RequestOptions _copyForRetry(RequestOptions options) {
+    return RequestOptions(
+      path: options.path,
+      method: options.method,
+      baseUrl: options.baseUrl,
+      queryParameters: Map<String, dynamic>.of(options.queryParameters),
+      data: options.data,
+      headers: Map<String, dynamic>.of(options.headers),
+      extra: Map<String, dynamic>.of(options.extra),
+      responseType: options.responseType,
+      contentType: options.contentType,
+      validateStatus: options.validateStatus,
+      receiveDataWhenStatusError: options.receiveDataWhenStatusError,
+      followRedirects: options.followRedirects,
+      maxRedirects: options.maxRedirects,
+      requestEncoder: options.requestEncoder,
+      responseDecoder: options.responseDecoder,
+      listFormat: options.listFormat,
+      connectTimeout: options.connectTimeout,
+      sendTimeout: options.sendTimeout,
+      receiveTimeout: options.receiveTimeout,
+    );
+  }
+
+  Map<String, dynamic> _unwrapCredentialPayload(Object? data) {
+    if (data is! Map) return const <String, dynamic>{};
+    final json = Map<String, dynamic>.from(data);
+    final nested = json['result'] ?? json['data'];
+    if (nested is Map) return Map<String, dynamic>.from(nested);
+    return json;
+  }
+
+  String? _stringValue(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is String) return value;
+    }
+    return null;
+  }
+
+  String _cookieHeaderWithRefreshToken(Object? currentHeader, String token) {
+    final values = <String>[];
+    if (currentHeader is String && currentHeader.trim().isNotEmpty) {
+      values.addAll(
+        currentHeader
+            .split(';')
+            .map((value) => value.trim())
+            .where(
+              (value) =>
+                  value.isNotEmpty &&
+                  !value.toLowerCase().startsWith('refresh_token='),
+            ),
+      );
+    }
+    values.add('refresh_token=$token');
+    return values.join('; ');
+  }
+
+  String? _refreshTokenFromSetCookie(String header) {
+    for (final part in header.split(';')) {
+      final trimmed = part.trim();
+      final separator = trimmed.indexOf('=');
+      if (separator <= 0) continue;
+      final name = trimmed.substring(0, separator).trim().toLowerCase();
+      if (name != 'refresh_token') continue;
+      return trimmed.substring(separator + 1).trim();
+    }
+    return null;
   }
 }

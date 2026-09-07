@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/router/navigation_service.dart';
-import '../../data/shipkia_mock_data.dart';
+import '../../core/router/web_module_catalog.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
@@ -24,26 +25,28 @@ class MoreScreen extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right, size: 18),
           onTap: () => context.toTracking(),
         ),
-        for (final module in primaryModules)
-          AppListTile(
-            leading: const Icon(Icons.apps_outlined),
-            title: module,
-            subtitle: _moduleDescription(module),
-            trailing: const Icon(Icons.chevron_right, size: 18),
-            onTap: () {},
-          ),
+        for (final module in WebModuleCatalog.routes)
+          _ModuleTile(route: module),
       ],
     );
   }
+}
 
-  String _moduleDescription(String module) {
-    return switch (module) {
-      'Tools' => 'Rate card, calculator, serviceability',
-      'Settings' => 'Company, products, boxes, users, automation',
-      'Support' => 'Tickets, comments, issue categories',
-      'Channels' => 'Stores, Shopify sync, ecommerce logs',
-      'Remittance' => 'COD, deductions, disputes',
-      _ => 'ShipKia operations workspace',
-    };
+class _ModuleTile extends StatelessWidget {
+  const _ModuleTile({required this.route});
+
+  final WebModuleRoute route;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppListTile(
+      leading: Icon(route.icon, color: ShipKiaColors.shipkiaBlue),
+      title: route.label,
+      subtitle: route.children.isEmpty
+          ? route.description
+          : '${route.children.length} pages - ${route.description}',
+      trailing: const Icon(Icons.chevron_right, size: 18),
+      onTap: () => context.push(route.path),
+    );
   }
 }

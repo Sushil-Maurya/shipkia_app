@@ -1,4 +1,5 @@
 import 'auth.dart';
+import 'dashboard.dart';
 import 'ndr.dart';
 import 'orders.dart';
 import 'profile.dart';
@@ -8,12 +9,24 @@ import 'wallet.dart';
 
 abstract final class ApiEndpoints {
   static const auth = AuthEndpointGroup();
+  static const dashboard = DashboardEndpointGroup();
   static const orders = OrderEndpointGroup();
   static const shipments = ShipmentEndpointGroup();
   static const ndr = NdrEndpointGroup();
   static const support = SupportEndpointGroup();
   static const wallet = WalletEndpointGroup();
   static const profile = ProfileEndpointGroup();
+}
+
+final class DashboardEndpointGroup {
+  const DashboardEndpointGroup();
+
+  String get metrics => DashboardEndpoints.metrics;
+  String get ordersOverview => DashboardEndpoints.ordersOverview;
+  String get ndrOverview => DashboardEndpoints.ndrOverview;
+  String get shipmentOverview => DashboardEndpoints.shipmentOverview;
+  String get orderConfirmationOverview =>
+      DashboardEndpoints.orderConfirmationOverview;
 }
 
 final class AuthEndpointGroup {

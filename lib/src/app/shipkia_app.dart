@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 import '../core/auth/shipkia_auth_controller.dart';
 import '../core/auth/shipkia_auth_scope.dart';
@@ -24,23 +25,38 @@ class ShipKiaApp extends StatefulWidget {
 class _ShipKiaAppState extends State<ShipKiaApp> {
   final _themeMode = ValueNotifier(ThemeMode.system);
   late final ShipKiaAuthController _authController;
+  late final ApiClient _apiClient;
   late final AppRouter _appRouter;
 
   @override
   void initState() {
     super.initState();
-    _authController = widget.authController ?? _createAuthController();
+    if (widget.authController == null) {
+      _authController = _createAuthController();
+    } else {
+      _authController = widget.authController!;
+      _apiClient = DioApiClient(
+        dio: Dio(),
+        tokenProvider: const StaticApiTokenProvider(null),
+      );
+    }
     _appRouter = AppRouter(authController: _authController);
     _authController.restoreSession();
   }
 
   ShipKiaAuthController _createAuthController() {
-    final tokenProvider = InMemoryApiTokenProvider();
-    final apiClient = DioApiClient(tokenProvider: tokenProvider);
-    return ShipKiaAuthController(
+    final tokenProvider = const SecureApiTokenProvider();
+    late final ShipKiaAuthController authController;
+    final apiClient = DioApiClient(
+      tokenProvider: tokenProvider,
+      onSessionExpired: () => authController.expireSession(),
+    );
+    _apiClient = apiClient;
+    authController = ShipKiaAuthController(
       authRepository: AuthRepository(apiClient),
       tokenProvider: tokenProvider,
     );
+    return authController;
   }
 
   @override
@@ -54,25 +70,28 @@ class _ShipKiaAppState extends State<ShipKiaApp> {
   Widget build(BuildContext context) {
     return ShipKiaAuthScope(
       controller: _authController,
-      child: ShipKiaThemeController(
-        notifier: _themeMode,
-        child: ValueListenableBuilder<ThemeMode>(
-          valueListenable: _themeMode,
-          builder: (context, themeMode, child) {
-            return MaterialApp.router(
-              title: 'ShipKia',
-              debugShowCheckedModeBanner: false,
-              scaffoldMessengerKey: ShipKiaFeedback.messengerKey,
-              theme: ShipKiaTheme.light,
-              darkTheme: ShipKiaTheme.dark,
-              themeMode: themeMode,
-              routerConfig: _appRouter.router,
-              builder: (context, child) => ShipKiaFeedbackHost(
-                networkController: widget.networkController,
-                child: child ?? const SizedBox.shrink(),
-              ),
-            );
-          },
+      child: ShipKiaApiScope(
+        apiClient: _apiClient,
+        child: ShipKiaThemeController(
+          notifier: _themeMode,
+          child: ValueListenableBuilder<ThemeMode>(
+            valueListenable: _themeMode,
+            builder: (context, themeMode, child) {
+              return MaterialApp.router(
+                title: 'ShipKia',
+                debugShowCheckedModeBanner: false,
+                scaffoldMessengerKey: ShipKiaFeedback.messengerKey,
+                theme: ShipKiaTheme.light,
+                darkTheme: ShipKiaTheme.dark,
+                themeMode: themeMode,
+                routerConfig: _appRouter.router,
+                builder: (context, child) => ShipKiaFeedbackHost(
+                  networkController: widget.networkController,
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

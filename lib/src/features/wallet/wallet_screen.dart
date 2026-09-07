@@ -1,11 +1,53 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../core/api/api.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_widgets.dart';
 
-class WalletScreen extends StatelessWidget {
+class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
+
+  @override
+  State<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen> {
+  bool _requestedLiveData = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_requestedLiveData) return;
+    final apiClient = ShipKiaApiScope.maybeOf(context);
+    if (apiClient == null) return;
+    _requestedLiveData = true;
+    unawaited(_loadLiveWallet(apiClient));
+  }
+
+  Future<void> _loadLiveWallet(ApiClient apiClient) async {
+    await Future.wait<Object?>([
+      _silentGet(apiClient, ApiEndpoints.wallet.wallet),
+      _silentGet(apiClient, ApiEndpoints.wallet.summary),
+    ]);
+  }
+
+  Future<Object?> _silentGet(ApiClient apiClient, String path) async {
+    try {
+      return await apiClient.request<Object?>(
+        ApiRequestConfig(
+          method: HttpMethod.get,
+          path: path,
+          showSuccessMessage: false,
+          showErrorMessage: false,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -36,6 +36,23 @@ void main() {
     expect(ApiEndpoints.orders.byId('ORD-123'), '/api/orders/ORD-123');
   });
 
+  test('dashboard endpoints match the React route registry', () {
+    expect(ApiEndpoints.dashboard.metrics, '/api/dashboard/metrics');
+    expect(
+      ApiEndpoints.dashboard.ordersOverview,
+      '/api/dashboard/orders-overview',
+    );
+    expect(ApiEndpoints.dashboard.ndrOverview, '/api/dashboard/ndr-overview');
+    expect(
+      ApiEndpoints.dashboard.shipmentOverview,
+      '/api/dashboard/shipment-overview',
+    );
+    expect(
+      ApiEndpoints.dashboard.orderConfirmationOverview,
+      '/api/dashboard/order-confirmation-overview',
+    );
+  });
+
   test('shipment, support, wallet, profile, and ndr endpoints are grouped', () {
     expect(
       ApiEndpoints.shipments.estimatedCost,

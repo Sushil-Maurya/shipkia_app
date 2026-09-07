@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../features/auth/data/auth_repository.dart';
@@ -29,7 +31,7 @@ class ShipKiaAuthController extends ChangeNotifier {
   Set<String> _permissions;
   final Duration restoreDelay;
   final AuthRepository? authRepository;
-  final InMemoryApiTokenProvider? tokenProvider;
+  final ApiTokenProvider? tokenProvider;
   bool _isSubmitting = false;
   AuthProfile? _profile;
 
@@ -70,7 +72,15 @@ class ShipKiaAuthController extends ChangeNotifier {
     _setSubmitting(true);
     try {
       final session = await repository.login(email: email, password: password);
-      tokenProvider?.setSessionId(session.session);
+      await tokenProvider?.saveSessionId(session.session);
+      if (session.accessToken != null &&
+          session.accessToken!.trim().isNotEmpty) {
+        await tokenProvider?.saveAccessToken(session.accessToken!);
+      }
+      if (session.refreshToken != null &&
+          session.refreshToken!.trim().isNotEmpty) {
+        await tokenProvider?.saveRefreshToken(session.refreshToken!);
+      }
       signIn(
         permissions: session.permissions.isEmpty
             ? _defaultPermissions
@@ -83,7 +93,13 @@ class ShipKiaAuthController extends ChangeNotifier {
   }
 
   void signOut() {
-    tokenProvider?.clear();
+    unawaited(tokenProvider?.clear());
+    _profile = null;
+    _setStatus(ShipKiaAuthStatus.unauthenticated);
+  }
+
+  Future<void> signOutAndClearCredentials() async {
+    await tokenProvider?.clear();
     _profile = null;
     _setStatus(ShipKiaAuthStatus.unauthenticated);
   }
@@ -98,14 +114,17 @@ class ShipKiaAuthController extends ChangeNotifier {
     _setSubmitting(true);
     try {
       await repository.logout();
+    } catch (_) {
+      // Match the web app fallback: a failed logout request still clears this
+      // client so the user can leave the session locally.
     } finally {
       _setSubmitting(false);
-      signOut();
+      await signOutAndClearCredentials();
     }
   }
 
   void expireSession() {
-    tokenProvider?.clear();
+    unawaited(tokenProvider?.clear());
     _profile = null;
     _setStatus(ShipKiaAuthStatus.unauthenticated);
   }
@@ -120,17 +139,44 @@ class ShipKiaAuthController extends ChangeNotifier {
   }
 
   Future<void> _loadAuthenticatedProfile(AuthRepository repository) async {
-    final token = await repository.renewToken();
-    tokenProvider
-      ?..setAccessToken(token.accessToken)
-      ..setSessionId(token.session);
-
-    final profile = await repository.getProfile(accessToken: token.accessToken);
-    _profile = profile;
-    if (profile.roles.isNotEmpty) {
-      _permissions = profile.roles.toSet();
+    try {
+      final token = await repository.renewToken();
+      await tokenProvider?.saveAccessToken(token.accessToken);
+      if (token.session != null && token.session!.trim().isNotEmpty) {
+        await tokenProvider?.saveSessionId(token.session!);
+      }
+      if (token.refreshToken != null && token.refreshToken!.trim().isNotEmpty) {
+        await tokenProvider?.saveRefreshToken(token.refreshToken!);
+      }
+    } catch (_) {
+      await _expireIfAccessTokenMissing();
     }
+
+    final accessToken = await tokenProvider?.getAccessToken();
+    if (accessToken == null || accessToken.trim().isEmpty) {
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final profile = await repository.getProfile();
+      _profile = profile;
+      if (profile.roles.isNotEmpty) {
+        _permissions = profile.roles.toSet();
+      }
+    } catch (_) {
+      // Login already succeeded. Keep the user in the app and let protected
+      // views retry with the available session/cookie context.
+    }
+
     notifyListeners();
+  }
+
+  Future<void> _expireIfAccessTokenMissing() async {
+    final accessToken = await tokenProvider?.getAccessToken();
+    if (accessToken == null || accessToken.trim().isEmpty) {
+      expireSession();
+    }
   }
 
   void _setStatus(ShipKiaAuthStatus value) {
