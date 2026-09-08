@@ -14,7 +14,7 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.variant = AppButtonVariant.primary,
     this.fullWidth = false,
-    this.height = 40,
+    this.height,
     this.loading = false,
     super.key,
   });
@@ -24,7 +24,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final AppButtonVariant variant;
   final bool fullWidth;
-  final double height;
+  final double? height;
   final bool loading;
 
   @override
@@ -55,24 +55,32 @@ class AppButton extends StatelessWidget {
     );
 
     if (AppPlatform.isCupertino && variant != AppButtonVariant.secondary) {
-      return SizedBox(
-        width: fullWidth ? double.infinity : null,
-        height: height,
-        child: CupertinoButton(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          borderRadius: ShipKiaRadius.mdBorder,
-          color: variant == AppButtonVariant.ghost ? null : background,
-          disabledColor: ShipKiaColors.neutralMuted,
-          onPressed: effectiveOnPressed,
-          child: IconTheme(
-            data: IconThemeData(color: foreground, size: 15),
-            child: DefaultTextStyle(
-              style: TextStyle(
-                color: foreground,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+      return Align(
+        alignment: Alignment.centerLeft,
+        widthFactor: fullWidth ? null : 1,
+        heightFactor: 1,
+        child: SizedBox(
+          width: fullWidth ? double.infinity : null,
+
+          child: CupertinoButton(
+            minimumSize: Size(0, height ?? 0),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            borderRadius: ShipKiaRadius.mdBorder,
+            color: variant == AppButtonVariant.ghost ? null : background,
+            disabledColor: ShipKiaColors.neutralMuted,
+            onPressed: effectiveOnPressed,
+            child: IconTheme(
+              data: IconThemeData(color: foreground, size: 15),
+              child: DefaultTextStyle(
+                style: TextStyle(
+                  fontFamily: ShipKiaTypography.fontFamily,
+                  color: foreground,
+                  fontSize: 12,
+                  height: 1.2,
+                  fontWeight: FontWeight.w800,
+                ),
+                child: child,
               ),
-              child: child,
             ),
           ),
         ),
@@ -80,9 +88,11 @@ class AppButton extends StatelessWidget {
     }
 
     final style = ButtonStyle(
-      minimumSize: WidgetStateProperty.all(Size(0, height)),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.standard,
+      minimumSize: WidgetStateProperty.all(Size(0, height ?? 0)),
       padding: WidgetStateProperty.all(
-        const EdgeInsets.symmetric(horizontal: 12),
+        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       ),
       foregroundColor: WidgetStateProperty.all(foreground),
       backgroundColor: WidgetStateProperty.all(background),
@@ -92,19 +102,29 @@ class AppButton extends StatelessWidget {
         RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
       ),
       textStyle: WidgetStateProperty.all(
-        const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        const TextStyle(
+          fontFamily: ShipKiaTypography.fontFamily,
+          fontSize: 12,
+          height: 1.2,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
 
-    return SizedBox(
-      width: fullWidth ? double.infinity : null,
-      height: height,
-      child: TextButton(
-        onPressed: effectiveOnPressed,
-        style: style,
-        child: AnimatedSwitcher(
-          duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
-          child: child,
+    return Align(
+      alignment: Alignment.centerLeft,
+      widthFactor: fullWidth ? null : 1,
+      heightFactor: 1,
+      child: SizedBox(
+        width: fullWidth ? double.infinity : null,
+
+        child: TextButton(
+          onPressed: effectiveOnPressed,
+          style: style,
+          child: AnimatedSwitcher(
+            duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+            child: child,
+          ),
         ),
       ),
     );

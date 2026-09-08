@@ -21,7 +21,7 @@ void main() {
     await tester.tap(find.text('Login'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Dispatch Console'), findsWidgets);
+    expect(find.text('Welcome there'), findsWidgets);
     expect(find.text('Orders'), findsWidgets);
   });
 
@@ -38,7 +38,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      Theme.of(tester.element(find.text('Dispatch Console').first)).brightness,
+      Theme.of(tester.element(find.text('Welcome there').first)).brightness,
       Brightness.light,
     );
 

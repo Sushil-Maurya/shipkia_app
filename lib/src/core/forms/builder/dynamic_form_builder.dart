@@ -1,3 +1,5 @@
+import '../conditions/form_condition.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../../design_system/design_system.dart';
@@ -16,6 +18,7 @@ class DynamicFormBuilder extends StatefulWidget {
     this.padding = EdgeInsets.zero,
     this.spacing = ShipKiaSpacing.md,
     this.maxColumns = 2,
+    this.sectionCards = false,
     super.key,
   }) : registry = registry ?? _defaultRegistry;
 
@@ -28,6 +31,7 @@ class DynamicFormBuilder extends StatefulWidget {
   final EdgeInsetsGeometry padding;
   final double spacing;
   final int maxColumns;
+  final bool sectionCards;
 
   @override
   State<DynamicFormBuilder> createState() => DynamicFormBuilderState();
@@ -70,14 +74,19 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
             spacing: widget.spacing,
           ),
           for (final section in widget.schema.sections) ...[
-            _FormSection(
-              schemaId: widget.schema.id,
+            _SectionFrame(
+              enabled: widget.sectionCards,
               section: section,
               controller: widget.controller,
-              registry: widget.registry,
-              spacing: widget.spacing,
-              maxColumns: widget.maxColumns,
-              fieldKeys: _fieldKeys,
+              child: _FormSection(
+                schemaId: widget.schema.id,
+                section: section,
+                controller: widget.controller,
+                registry: widget.registry,
+                spacing: widget.spacing,
+                maxColumns: widget.maxColumns,
+                fieldKeys: _fieldKeys,
+              ),
             ),
             SizedBox(height: widget.spacing),
           ],
@@ -108,54 +117,69 @@ class _FormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (section.title != null) ...[
-          Text(section.title!, style: Theme.of(context).textTheme.titleLarge),
-          if (section.description != null) ...[
-            const SizedBox(height: ShipKiaSpacing.xs),
-            Text(
-              section.description!,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: ShipKiaColors.textSecondary(context)),
-            ),
-          ],
-          SizedBox(height: spacing),
-        ],
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= ShipKiaBreakpoints.medium
-                ? maxColumns.clamp(1, 4).toInt()
-                : 1;
-            final gapCount = columns - 1;
-            final width =
-                (constraints.maxWidth - (spacing * gapCount)) / columns;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) =>
+          !section.fields.any(
+            (f) => f.visible && f.visibleWhen.matches(controller),
+          )
+          ? const SizedBox.shrink()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final field in section.fields)
-                  SizedBox(
-                    key: fieldKeys.putIfAbsent(field.id, GlobalKey.new),
-                    width: columns == 1
-                        ? constraints.maxWidth
-                        : (((width * field.columnSpan) +
-                                  (spacing * (field.columnSpan - 1)))
-                              .clamp(width, constraints.maxWidth)
-                              .toDouble()),
-                    child: DynamicFormField(
-                      formId: schemaId,
-                      field: field,
-                      controller: controller,
-                      registry: registry,
-                    ),
+                if (section.title != null) ...[
+                  Text(
+                    section.title!,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  if (section.description != null) ...[
+                    const SizedBox(height: ShipKiaSpacing.xs),
+                    Text(
+                      section.description!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ShipKiaColors.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: spacing),
+                ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns =
+                        constraints.maxWidth >= ShipKiaBreakpoints.medium
+                        ? maxColumns.clamp(1, 4).toInt()
+                        : 1;
+                    final gapCount = columns - 1;
+                    final width =
+                        (constraints.maxWidth - (spacing * gapCount)) / columns;
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        for (final field in section.fields.where(
+                          (f) => f.visible && f.visibleWhen.matches(controller),
+                        ))
+                          SizedBox(
+                            key: fieldKeys.putIfAbsent(field.id, GlobalKey.new),
+                            width: columns == 1
+                                ? constraints.maxWidth
+                                : (((width * field.columnSpan) +
+                                          (spacing * (field.columnSpan - 1)))
+                                      .clamp(width, constraints.maxWidth)
+                                      .toDouble()),
+                            child: DynamicFormField(
+                              formId: schemaId,
+                              field: field,
+                              controller: controller,
+                              registry: registry,
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ],
-            );
-          },
-        ),
-      ],
+            ),
     );
   }
 }
@@ -198,6 +222,43 @@ class _FormErrorBanner extends StatelessWidget {
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+}
+
+class _SectionFrame extends StatelessWidget {
+  const _SectionFrame({
+    required this.enabled,
+    required this.section,
+    required this.controller,
+    required this.child,
+  });
+  final bool enabled;
+  final DynamicFormSectionSchema section;
+  final DynamicFormController controller;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        if (!section.fields.any(
+          (f) => f.visible && f.visibleWhen.matches(controller),
+        )) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Theme.of(context).dividerColor),
+          ),
+          child: child,
         );
       },
     );

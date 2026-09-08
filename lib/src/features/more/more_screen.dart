@@ -14,7 +14,38 @@ class MoreScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        const SkSectionHeader(title: 'Modules'),
+        const SkSectionHeader(title: 'Assets & settings'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final path in [
+                '/settings/products',
+                '/settings/pickup_address',
+                '/settings/bank_accounts',
+                '/settings/box',
+                '/settings',
+              ])
+                ActionChip(
+                  avatar: Icon(
+                    WebModuleCatalog.allRoutes
+                        .firstWhere((r) => r.path == path)
+                        .icon,
+                    size: 18,
+                  ),
+                  label: Text(
+                    WebModuleCatalog.allRoutes
+                        .firstWhere((r) => r.path == path)
+                        .label,
+                  ),
+                  onPressed: () => context.push(path),
+                ),
+            ],
+          ),
+        ),
+        const SkSectionHeader(title: 'Operations'),
         AppListTile(
           leading: const Icon(
             Icons.travel_explore,

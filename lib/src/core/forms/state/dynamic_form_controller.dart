@@ -32,6 +32,16 @@ class DynamicFormController extends ChangeNotifier {
   DynamicFormSubmissionStatus submissionStatus =
       DynamicFormSubmissionStatus.idle;
   String? formErrorText;
+  final Map<String, String> _externalErrors = {};
+  void setExternalError(String id, String? error) {
+    if (error == null) {
+      _externalErrors.remove(id);
+    } else {
+      _externalErrors[id] = error;
+    }
+    setFieldError(id, error);
+    notifyListeners();
+  }
 
   bool get isDirty => _fields.values.any((field) => field.dirty);
   bool get isSubmitting =>
@@ -98,7 +108,9 @@ class DynamicFormController extends ChangeNotifier {
     submissionStatus = DynamicFormSubmissionStatus.validating;
     var isValid = true;
     for (final field in schema.fields) {
-      final error = validator.validateField(field: field, controller: this);
+      final error =
+          _externalErrors[field.id] ??
+          validator.validateField(field: field, controller: this);
       setFieldError(field.id, error);
       if (error != null) isValid = false;
     }
@@ -129,6 +141,7 @@ class DynamicFormController extends ChangeNotifier {
   }
 
   void reset() {
+    _externalErrors.clear();
     for (final field in schema.fields) {
       _setFieldState(
         field.id,

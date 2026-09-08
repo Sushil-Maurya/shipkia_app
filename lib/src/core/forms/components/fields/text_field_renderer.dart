@@ -1,3 +1,5 @@
+import 'api_field_renderers.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -12,6 +14,11 @@ class TextDynamicFieldRenderer implements DynamicFieldRenderer {
   Widget build(DynamicFieldContext context) {
     final field = context.field;
     final type = field.type;
+    if (type == DynamicFieldType.text &&
+        field.metadata['object_type'] != null &&
+        field.metadata['display'] is Map) {
+      return const LinkApiFieldRenderer(allowFreeText: true).build(context);
+    }
     final value = context.value?.toString();
     final keyboardType = field.keyboardType ?? _keyboardType(type);
     final inputFormatters = field.inputFormatters ?? _formatters(type);
@@ -24,19 +31,39 @@ class TextDynamicFieldRenderer implements DynamicFieldRenderer {
         label: _label(context),
         hintText: field.placeholder,
         helperText: field.helperText,
+        suffix: field.type == DynamicFieldType.unit
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(switch (field.metadata['unit_category']) {
+                  'currency' => '\u20b9',
+                  'weight' => 'KG',
+                  'length' => 'CM',
+                  _ => '',
+                }),
+              )
+            : null,
         errorText: context.errorText,
         initialValue: value,
         enabled: context.access.canFocus,
         readOnly: context.access.isReadOnly,
         obscureText: type == DynamicFieldType.password,
         keyboardType: keyboardType,
-        maxLines: field.maxLines ?? (type == DynamicFieldType.textarea ? 4 : 1),
+        maxLines:
+            field.maxLines ??
+            ((type == DynamicFieldType.textarea ||
+                    type == DynamicFieldType.json)
+                ? 4
+                : 1),
         maxLength: field.maxLength,
         inputFormatters: inputFormatters,
-        textInputAction: type == DynamicFieldType.textarea
+        textInputAction:
+            (type == DynamicFieldType.textarea || type == DynamicFieldType.json)
             ? TextInputAction.newline
             : TextInputAction.next,
-        height: type == DynamicFieldType.textarea ? 104 : 40,
+        height:
+            (type == DynamicFieldType.textarea || type == DynamicFieldType.json)
+            ? 104
+            : 40,
         onChanged: (value) => context.onChanged(value),
       ),
     );
@@ -55,10 +82,10 @@ class TextDynamicFieldRenderer implements DynamicFieldRenderer {
       DynamicFieldType.number ||
       DynamicFieldType.quantity ||
       DynamicFieldType.pincode => TextInputType.number,
-      DynamicFieldType.decimal => const TextInputType.numberWithOptions(
-        decimal: true,
-      ),
-      DynamicFieldType.textarea => TextInputType.multiline,
+      DynamicFieldType.decimal || DynamicFieldType.unit =>
+        const TextInputType.numberWithOptions(decimal: true),
+      DynamicFieldType.textarea ||
+      DynamicFieldType.json => TextInputType.multiline,
       _ => null,
     };
   }
@@ -69,7 +96,7 @@ class TextDynamicFieldRenderer implements DynamicFieldRenderer {
       DynamicFieldType.pincode ||
       DynamicFieldType.number ||
       DynamicFieldType.quantity => [FilteringTextInputFormatter.digitsOnly],
-      DynamicFieldType.decimal => [
+      DynamicFieldType.decimal || DynamicFieldType.unit => [
         FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
       ],
       _ => null,

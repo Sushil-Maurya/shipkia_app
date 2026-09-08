@@ -457,7 +457,7 @@ abstract final class WebModuleCatalog {
           icon: Icons.code_outlined,
           description: 'Label and invoice print templates.',
           kind: WebModuleKind.list,
-          objectType: 'template',
+          objectType: 'print_template',
         ),
         WebModuleRoute(
           path: '/settings/shipment-automation',

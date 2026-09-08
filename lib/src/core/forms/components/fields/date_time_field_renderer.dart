@@ -12,6 +12,8 @@ class DateTimeDynamicFieldRenderer implements DynamicFieldRenderer {
     final field = context.field;
     final display = field.type == DynamicFieldType.time
         ? _formatTime(context.value)
+        : field.type == DynamicFieldType.dateTime && context.value is DateTime
+        ? '${_formatDate(context.value)} ${_formatTime(TimeOfDay.fromDateTime(context.value! as DateTime))}'
         : _formatDate(context.value);
 
     return AppTextField(
@@ -53,10 +55,36 @@ class DateTimeDynamicFieldRenderer implements DynamicFieldRenderer {
                 final result = await showAppDatePicker(
                   context: context.buildContext,
                   initialDate: current,
-                  firstDate: DateTime(now.year - 5),
-                  lastDate: DateTime(now.year + 5),
+                  firstDate: DateTime(
+                    current.year < now.year - 5 ? current.year : now.year - 5,
+                  ),
+                  lastDate: DateTime(
+                    current.year > now.year + 5
+                        ? current.year + 1
+                        : now.year + 5,
+                  ),
                 );
-                if (result != null) context.onChanged(result);
+                if (result != null && context.buildContext.mounted) {
+                  if (field.type == DynamicFieldType.dateTime) {
+                    final time = await showAppTimePicker(
+                      context: context.buildContext,
+                      initialTime: TimeOfDay.fromDateTime(current),
+                    );
+                    if (time != null && context.buildContext.mounted) {
+                      context.onChanged(
+                        DateTime(
+                          result.year,
+                          result.month,
+                          result.day,
+                          time.hour,
+                          time.minute,
+                        ),
+                      );
+                    }
+                  } else {
+                    context.onChanged(result);
+                  }
+                }
               }
             : null,
       ),

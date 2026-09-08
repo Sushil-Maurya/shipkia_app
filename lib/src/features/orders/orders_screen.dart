@@ -3,222 +3,101 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api.dart';
-import '../../core/api/api_record_parser.dart';
 import '../../core/router/navigation_service.dart';
 import '../../core/router/route_state_reader.dart';
-import '../../core/router/web_module_catalog.dart';
-import '../../data/shipkia_mock_data.dart';
+import '../../core/state/paginated_controller.dart';
+import '../../design_system/app_paginated_list.dart';
 import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
-import '../../widgets/shipkia_shell_widgets.dart';
 import '../../widgets/shipkia_widgets.dart';
+import 'data/orders_repository.dart';
+import 'domain/order_stages.dart';
+import 'domain/order_summary.dart';
 import 'order_filters_sheet.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({this.query = const OrdersRouteQuery(), super.key});
-
   final OrdersRouteQuery query;
-
   @override
   State<OrdersScreen> createState() => _OrdersScreenState();
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
-  String? _lastRequestKey;
-  List<OrderSummary>? _liveOrders;
-  int? _liveTotal;
-  bool _loading = false;
+  final _list = PaginatedController<OrderSummary>(
+    recordKey: (order) => order.key,
+  );
+  late final _search = TextEditingController(text: widget.query.search);
+  ApiClient? _api;
+  OrdersRepository? _repository;
+  Timer? _debounce;
   OrderListFilters _filters = const OrderListFilters();
-
-  static const _stageTabs = <String>[
-    'New',
-    'Ready to Ship',
-    'Ready to Pickup',
-    'In-Transit',
-    'Delivered',
-    'Cancelled',
-    'RTO',
-    'All',
-  ];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadIfNeeded();
+    final api = ShipKiaApiScope.maybeOf(context);
+    if (identical(_api, api)) return;
+    _api = api;
+    _repository = api == null ? null : OrdersRepository(api);
+    _loadQuery();
   }
 
   @override
   void didUpdateWidget(OrdersScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _loadIfNeeded();
-  }
-
-  void _loadIfNeeded() {
-    final apiClient = ShipKiaApiScope.maybeOf(context);
-    if (apiClient == null) return;
-    final key =
-        '${widget.query.stage}|${widget.query.search}|${_filters.cacheKey}';
-    if (_lastRequestKey == key) return;
-    _lastRequestKey = key;
-    setState(() => _loading = true);
-    unawaited(_loadLiveOrders(apiClient));
-  }
-
-  Future<void> _loadLiveOrders(ApiClient apiClient) async {
-    final stage = widget.query.stage;
-    final params = <String, dynamic>{
-      'page': '1',
-      'rows': '20',
-      if (widget.query.search?.isNotEmpty == true)
-        'search': widget.query.search,
-    };
-
-    try {
-      final data = await apiClient.request<Object?>(
-        ApiRequestConfig(
-          method: HttpMethod.post,
-          path: WebModuleCatalog.listEndpointFor('orders'),
-          data: _filters.toPayload(stage: stage),
-          params: params,
-          showSuccessMessage: false,
-          showErrorMessage: false,
-        ),
-      );
-      final rows = extractApiRecords(data);
-      if (!mounted) return;
-      setState(() {
-        _liveOrders = rows.map(OrderSummary.fromJson).toList();
-        _liveTotal = extractApiRecordTotal(data) ?? _liveOrders?.length;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loading = false);
+    if (oldWidget.query.stage == widget.query.stage &&
+        oldWidget.query.search == widget.query.search) {
       return;
     }
+    _debounce?.cancel();
+    final search = widget.query.search ?? '';
+    if (_search.text != search) _search.text = search;
+    _loadQuery();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final selectedStage = widget.query.stage ?? 'All';
-    final visibleOrders = _filteredOrders(_liveOrders ?? orders);
-    final totalRecords = _liveTotal ?? visibleOrders.length;
-
-    return Column(
-      children: [
-        ShipKiaCommandBar(
-          hint: widget.query.search?.isNotEmpty == true
-              ? widget.query.search!
-              : 'Search by order, AWB, customer',
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppButton(
-                label: 'Add',
-                icon: Icons.add,
-                height: 28,
-                onPressed: () {},
-              ),
-              const SizedBox(width: 3),
-              AppIconButton(
-                icon: Icons.more_vert,
-                onPressed: _openActions,
-                tooltip: 'Order actions',
-                size: 28,
-              ),
-            ],
-          ),
+  void _loadQuery() {
+    final repository = _repository;
+    if (repository == null) return;
+    final stage = widget.query.stage;
+    final search = widget.query.search;
+    final filters = _filters;
+    unawaited(
+      _list.setQuery(
+        (page, pageSize, token) => repository.list(
+          page: page,
+          pageSize: pageSize,
+          cancelToken: token,
+          stage: stage,
+          search: search,
+          filters: filters,
         ),
-        SizedBox(
-          height: 30,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(10, 3, 10, 0),
-            scrollDirection: Axis.horizontal,
-            children: [
-              for (final stage in _stageTabs)
-                _StageChip(
-                  label: stage,
-                  selected: selectedStage == stage,
-                  onSelected: (_) => context.toOrders(stage: stage),
-                ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 1, 12, 3),
-          child: Row(
-            children: [
-              Text(
-                '$totalRecords records',
-                style: Theme.of(context).textTheme.labelSmall
-                    ?.copyWith(color: ShipKiaColors.mutedInk),
-              ),
-              const Spacer(),
-              if (!_filters.isEmpty)
-                Text(
-                  '${_filters.activeCount} filters',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: ShipKiaColors.shipkiaBlue,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        if (_loading && _liveOrders != null)
-          const LinearProgressIndicator(minHeight: 2),
-        Expanded(
-          child: _loading && _liveOrders == null
-              ? const Center(child: CircularProgressIndicator())
-              : visibleOrders.isEmpty
-              ? const AppEmptyState(
-                  title: 'No orders yet',
-                  message: 'Create or import orders and they will appear here with shipment status.',
-                  actionLabel: 'Create order',
-                )
-              : AppStaggeredList(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    for (final order in visibleOrders)
-                      SkOrderRow(
-                        order: order,
-                        onTap: () =>
-                            context.toOrderDetails(order.id, order: order),
-                      ),
-                  ],
-                ),
-        ),
-      ],
+      ),
     );
   }
 
-  void _openActions() {
-    showAppActionSheet(
-      context: context,
-      title: 'Order Actions',
-      items: [
-        AppActionSheetItem(
-          label: 'Reload',
-          icon: Icons.refresh,
-          onSelected: _reload,
-        ),
-        AppActionSheetItem(
-          label: 'Export',
-          icon: Icons.file_download_outlined,
-          onSelected: () {},
-        ),
-        AppActionSheetItem(
-          label: 'Filters',
-          icon: Icons.filter_list,
-          onSelected: _openFilters,
-        ),
-      ],
+  void _searchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 350),
+      () => _submitSearch(value),
     );
   }
 
-  void _reload() {
-    setState(() => _lastRequestKey = null);
-    _loadIfNeeded();
+  void _submitSearch(String value) {
+    _debounce?.cancel();
+    if (!mounted || value.trim() == (widget.query.search ?? '')) return;
+    context.toOrders(stage: widget.query.stage, search: value.trim());
+  }
+
+  void _clearFilters() {
+    _debounce?.cancel();
+    _search.clear();
+    setState(() => _filters = const OrderListFilters());
+    if (widget.query.stage != null || widget.query.search != null) {
+      context.toOrders();
+    } else {
+      _loadQuery();
+    }
   }
 
   Future<void> _openFilters() async {
@@ -226,91 +105,166 @@ class _OrdersScreenState extends State<OrdersScreen> {
       context: context,
       filters: _filters,
     );
-    if (next == null || !mounted) return;
-    setState(() {
-      _filters = next;
-      _lastRequestKey = null;
-    });
-    _loadIfNeeded();
+    if (!mounted || next == null || next.cacheKey == _filters.cacheKey) return;
+    setState(() => _filters = next);
+    _loadQuery();
   }
 
-  List<OrderSummary> _filteredOrders(List<OrderSummary> source) {
-    final stage = widget.query.stage;
-    if (stage == null || stage.isEmpty || stage == 'All') return source;
-    return source.where((order) => _stageLabel(order.status) == stage).toList();
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
+    _list.dispose();
+    super.dispose();
   }
-
-  String _stageLabel(ShipmentStatus status) {
-    return switch (status) {
-      ShipmentStatus.newOrder => 'New',
-      ShipmentStatus.readyToShip => 'Ready to Ship',
-      ShipmentStatus.readyToPickup => 'Ready to Pickup',
-      ShipmentStatus.inTransit => 'In-Transit',
-      ShipmentStatus.delivered => 'Delivered',
-      ShipmentStatus.ndr => 'RTO',
-      ShipmentStatus.rto => 'RTO',
-      ShipmentStatus.cancelled => 'Cancelled',
-    };
-  }
-}
-
-class _StageChip extends StatelessWidget {
-  const _StageChip({
-    required this.label,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final String label;
-  final bool selected;
-  final ValueChanged<bool> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected
-        ? ShipKiaColors.paper
-        : ShipKiaColors.textPrimary(context);
-    final background = selected
-        ? ShipKiaColors.shipkiaBlue
-        : ShipKiaColors.surface(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: ShipKiaRadius.smBorder,
-          onTap: () => onSelected(!selected),
-          child: AnimatedContainer(
-            duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
-            curve: ShipKiaMotion.standard,
-            height: 24,
-            constraints: const BoxConstraints(minWidth: 36),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: ShipKiaRadius.smBorder,
-              border: Border.all(
-                color: selected
-                    ? ShipKiaColors.shipkiaBlue
-                    : ShipKiaColors.border(context),
+    final stage = widget.query.stage ?? 'All';
+    final filtered =
+        !_filters.isEmpty ||
+        stage != 'All' ||
+        (widget.query.search?.isNotEmpty ?? false);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Orders',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Your shipping queue, at a glance',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: ShipKiaColors.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            child: AnimatedDefaultTextStyle(
-              duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
-              curve: ShipKiaMotion.standard,
-              style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                color: foreground,
-                fontWeight: FontWeight.w800,
-                height: 1,
-                fontSize: 9,
+              AppIconButton(
+                icon: Icons.refresh,
+                tooltip: 'Refresh orders',
+                size: 48,
+                onPressed: _repository == null ? null : _list.refresh,
               ),
-              child: Text(label, textAlign: TextAlign.center),
-            ),
+            ],
           ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppTextField(
+                  controller: _search,
+                  hintText: 'Search AWB or delivery phone',
+                  prefixIcon: Icons.search,
+                  height: 48,
+                  textInputAction: TextInputAction.search,
+                  onChanged: _searchChanged,
+                  onSubmitted: _submitSearch,
+                  suffix: ValueListenableBuilder(
+                    valueListenable: _search,
+                    builder: (context, value, _) => value.text.isEmpty
+                        ? const SizedBox.shrink()
+                        : AppIconButton(
+                            icon: Icons.close,
+                            tooltip: 'Clear search',
+                            onPressed: () {
+                              _search.clear();
+                              _submitSearch('');
+                            },
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Badge(
+                isLabelVisible: !_filters.isEmpty,
+                label: Text('${_filters.activeCount}'),
+                child: AppIconButton(
+                  icon: Icons.tune,
+                  tooltip: 'Filter orders',
+                  size: 48,
+                  onPressed: _openFilters,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            children: [
+              for (final value in OrderStages.tabs)
+                AppChip(
+                  label: OrderStages.label(value),
+                  selected: stage == value,
+                  onSelected: (_) {
+                    _debounce?.cancel();
+                    context.toOrders(stage: value, search: _search.text.trim());
+                  },
+                ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: _list,
+                  builder: (context, _) => Text(
+                    _list.totalRecords != null
+                        ? '${_list.totalRecords} orders / ${_list.records.length} shown'
+                        : '${_list.records.length} orders loaded',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ),
+              if (filtered)
+                TextButton(
+                  onPressed: _clearFilters,
+                  child: const Text('Clear all'),
+                ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _repository == null
+              ? const AppStateView(
+                  icon: Icons.cloud_off_outlined,
+                  title: 'Orders unavailable',
+                  message: 'Connect to your workspace to load orders.',
+                )
+              : AppPaginatedList<OrderSummary>(
+                  controller: _list,
+                  emptyTitle: filtered ? 'No matching orders' : 'No orders yet',
+                  emptyMessage: filtered
+                      ? 'Try another search or clear your filters.'
+                      : 'Orders from your workspace will appear here.',
+                  emptyActionLabel: filtered ? 'Clear filters' : null,
+                  onEmptyAction: filtered ? _clearFilters : null,
+                  itemBuilder: (context, order) => SkOrderRow(
+                    key: ValueKey(order.key),
+                    order: order,
+                    onTap: () =>
+                        context.toOrderDetails(order.key, order: order),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

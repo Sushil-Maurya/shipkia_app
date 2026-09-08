@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../data/shipkia_mock_data.dart';
+import '../features/orders/domain/order_summary.dart';
+import '../data/shipkia_mock_data.dart' show MetricSummary;
 import '../design_system/design_system.dart';
 import '../theme/shipkia_colors.dart';
 
@@ -98,7 +99,9 @@ class SkSetupChip extends StatelessWidget {
 }
 
 class SkStatusBadge extends StatelessWidget {
-  const SkStatusBadge({required this.status, super.key});
+  const SkStatusBadge({required this.status, this.label, super.key});
+
+  final String? label;
 
   final ShipmentStatus status;
 
@@ -107,29 +110,34 @@ class SkStatusBadge extends StatelessWidget {
     final color = shipmentStatusColor(status);
     final icon = shipmentStatusIcon(status);
 
-    return AnimatedContainer(
-      duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
-      curve: ShipKiaMotion.standard,
-      height: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 7),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: ShipKiaRadius.smBorder,
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Center(
+    return Align(
+      alignment: Alignment.centerLeft,
+      widthFactor: 1,
+      heightFactor: 1,
+      child: AnimatedContainer(
+        duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+        curve: ShipKiaMotion.standard,
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: ShipKiaRadius.smBorder,
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 12, color: color),
             const SizedBox(width: ShipKiaSpacing.xs),
-            Text(
-              statusLabel(status).toUpperCase(),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w900,
-                height: 1,
+            Flexible(
+              child: Text(
+                (label ?? statusLabel(status)).toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
               ),
             ),
           ],
@@ -212,7 +220,7 @@ class SkMetricTile extends StatelessWidget {
             Text(
               metric.label,
               style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: ShipKiaColors.mutedInk),
+                  ?.copyWith(color: ShipKiaColors.textSecondary(context)),
             ),
           ],
         ),
@@ -239,7 +247,7 @@ class SkOrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 0, 10, 5),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: AppCard(
         padding: EdgeInsets.zero,
         onTap: onTap,
@@ -260,7 +268,7 @@ class SkOrderRow extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(13, 7, 7, 7),
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
               child: Column(
                 children: [
                   Row(
@@ -291,11 +299,13 @@ class SkOrderRow extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Hero(
-                                    tag: 'order-title-${order.id}',
+                                    tag: 'order-title-${order.key}',
                                     child: Material(
                                       color: Colors.transparent,
                                       child: Text(
                                         order.id,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium,
@@ -303,7 +313,12 @@ class SkOrderRow extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                SkStatusBadge(status: order.status),
+                                Flexible(
+                                  child: SkStatusBadge(
+                                    status: order.status,
+                                    label: order.stageLabel,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 3),
@@ -311,7 +326,9 @@ class SkOrderRow extends StatelessWidget {
                               '${order.customer} - ${order.city}',
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: ShipKiaColors.mutedInk),
+                                  ?.copyWith(
+                                    color: ShipKiaColors.textSecondary(context),
+                                  ),
                             ),
                           ],
                         ),
@@ -327,13 +344,13 @@ class SkOrderRow extends StatelessWidget {
                       _Meta(label: 'Courier', value: order.courier),
                       _Meta(
                         label: order.paymentMode,
-                        value: 'Rs ${order.amount.toStringAsFixed(0)}',
+                        value: 'Rs ${order.amount.toStringAsFixed(2)}',
                       ),
                       AppIconButton(
-                        icon: Icons.more_vert,
-                        onPressed: () {},
-                        tooltip: 'Row actions',
-                        size: 28,
+                        icon: Icons.chevron_right,
+                        onPressed: onTap,
+                        tooltip: 'View order details',
+                        size: 44,
                       ),
                     ],
                   ),
@@ -363,7 +380,7 @@ class _Meta extends StatelessWidget {
             label.toUpperCase(),
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall
-                ?.copyWith(color: ShipKiaColors.mutedInk),
+                ?.copyWith(color: ShipKiaColors.textSecondary(context)),
           ),
           const SizedBox(height: 2),
           Text(

@@ -61,6 +61,7 @@ class AccountScreen extends StatelessWidget {
               onPressed: () => _confirmSignOut(context),
               variant: AppButtonVariant.destructive,
               fullWidth: true,
+              height: 40,
             ),
           ),
         ],

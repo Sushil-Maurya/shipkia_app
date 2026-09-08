@@ -1,0 +1,704 @@
+[
+  {
+    "id": "",
+    "name": "id",
+    "label": "Order Id",
+    "type": "uid",
+    "display": "ORD-YYYY",
+    "readonly": true,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "pickup_address",
+    "label": "Pickup Address",
+    "type": "link",
+    "object_type": "pickup_address",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "awb",
+    "label": "AWB Number",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "customer_engagement",
+    "label": "Customer Engagement",
+    "type": "option",
+    "options": "Cancelled,Confirmed,Pending Confirmation,No Response,Closed Due to Manual Shipment,Auto Shipped After Timeout",
+    "display": "select",
+    "max": 1,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "reference_id",
+    "label": "Reference Id",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "stage",
+    "default": "New",
+    "label": "Stage",
+    "type": "option",
+    "options": "New,Ready to Ship,Ready to Pickup,In-Transit,Delivered,RTO,Cancelled,Lost,Out for Pickup,Pickup Error,Pickup Exception,Pickup Queued,Pickup Rescheduled,Pickup Scheduled,Ready to Ship,Searching for Rider,Pickup Scheduled,Pickup Completed,Partially Completed,Damaged,Delayed,Destroyed,In Transit,Out for Delivery,Picked Up,Reached Destination Hub,Delivered,Undelivered,On Hold,Connection Aligned,Custom Cleared,In Flight,In Transit Overseas,Reached Overseas Warehouse,Custom Cleared Overseas,Overdue Orders,RTO Initiated,RTO Delivered,RTO Acknowledged,RTO Rejected,RTO In Transit,RTO NDR,Cancelled,Lost,Not Serviceable,Exception,Self Drop-Off,Seized,ODA Self Pickup",
+    "display": "select",
+    "max": 1,
+    "readonly": true,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "status",
+    "default": "New",
+    "label": "Status",
+    "type": "option",
+    "options": "New,Out for Pickup,Pickup Error,Pickup Exception,Pickup Queued,Pickup Rescheduled,Pickup Scheduled,Ready to Ship,Searching for Rider,Pickup Scheduled,Pickup Completed,Partially Completed,Damaged,Delayed,Destroyed,In Transit,Out for Delivery,Picked Up,Reached Destination Hub,Delivered,Undelivered,On Hold,Connection Aligned,Custom Cleared,In Flight,In Transit Overseas,Reached Overseas Warehouse,Custom Cleared Overseas,Overdue Orders,RTO Initiated,RTO Delivered,RTO Acknowledged,RTO Rejected,RTO In Transit,RTO NDR,Cancelled,Lost,Not Serviceable,Exception,Self Drop-Off,Seized,ODA Self Pickup,Self Fulfilled",
+    "display": "select",
+    "readonly": true,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "section_break_del_det",
+    "type": "section",
+    "label": "Delivery Details",
+    "display": 2
+  },
+  {
+    "id": "",
+    "name": "delivery_phone",
+    "label": "Delivery Phone Number",
+    "type": "phone",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "delivery_alternate_phone",
+    "label": "Alternate Phone Number",
+    "type": "phone",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "delivery_full_name",
+    "label": "Delivery Full Name",
+    "type": "text",
+    "max": 255,
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "delivery_address",
+    "label": "Delivery Address",
+    "type": "textarea",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "delivery_postal_code",
+    "label": "Delivery Postal Code",
+    "type": "postal_code",
+    "max": 10,
+    "display": "{\"city\":\"delivery_city\",\"state\":\"delivery_state\",\"country\":\"delivery_country\"}",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "delivery_city",
+    "label": "Delivery City",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "delivery_country",
+    "label": "Delivery Country",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "delivery_state",
+    "label": "Delivery State",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "delivery_landmark",
+    "label": "Delivery Landmark",
+    "type": "textarea",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "label": "Is billing same",
+    "name": "is_billing_same",
+    "default": true,
+    "type": "bool",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "section_break_bil_add",
+    "type": "section",
+    "label": "Billing Address",
+    "display": 2
+  },
+  {
+    "id": "",
+    "name": "billing_phone",
+    "label": "Billing Phone Number",
+    "type": "phone",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "billing_full_name",
+    "label": "Billing Full Name",
+    "type": "text",
+    "max": 255,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "billing_postal_code",
+    "label": "Billing Postal Code",
+    "type": "postal_code",
+    "max": 10,
+    "display": "{\"city\":\"billing_city\",\"state\":\"billing_state\",\"country\":\"billing_country\"}",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "billing_state",
+    "label": "Billing State",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "billing_city",
+    "label": "Billing City",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "billing_country",
+    "label": "Billing Country",
+    "type": "text",
+    "max": 255,
+    "readonly": true,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "billing_address",
+    "label": "Billing Address",
+    "type": "textarea",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "billing_landmark",
+    "label": "Billing Landmark",
+    "type": "textarea",
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "section_break_prod",
+    "type": "section",
+    "display": 1,
+    "label": "Products"
+  },
+  {
+    "id": "",
+    "name": "product_details",
+    "label": "Product Details",
+    "type": "grid",
+    "object_type": "products_grid",
+    "fields": [
+      {
+        "id": "",
+        "name": "product_name",
+        "label": "Product Name",
+        "type": "text",
+        "display": {
+          "hsn_code": "hsn_code",
+          "tax_rate": "tax_rate",
+          "price": "unit_price",
+          "tax_preference": "tax_preference"
+        },
+        "object_type": "products",
+        "min": 1,
+        "readonly": false,
+        "required": true,
+        "detail_view": true,
+        "list_view": true,
+        "filter_view": true,
+        "perm_level": 0
+      },
+      {
+        "id": "",
+        "name": "hsn_code",
+        "label": "HSN Code",
+        "type": "text",
+        "min": 4,
+        "max": 8,
+        "readonly": true,
+        "required": false,
+        "detail_view": true,
+        "list_view": true,
+        "filter_view": false,
+        "perm_level": 0
+      },
+      {
+        "id": "",
+        "name": "unit_price",
+        "label": "Unit Price",
+        "type": "unit",
+        "display": "currency",
+        "display_value": "Rupees",
+        "readonly": false,
+        "required": true,
+        "detail_view": true,
+        "list_view": false,
+        "filter_view": false,
+        "perm_level": 0
+      },
+      {
+        "id": "",
+        "name": "quantity",
+        "label": "Quantity",
+        "type": "int",
+        "default": 1,
+        "min": 1,
+        "readonly": false,
+        "required": true,
+        "detail_view": true,
+        "list_view": false,
+        "filter_view": false,
+        "perm_level": 0
+      },
+      {
+        "id": "",
+        "name": "product_discount",
+        "label": "Product Discount",
+        "type": "unit",
+        "display": "currency",
+        "display_value": "Rupees",
+        "default": 0,
+        "readonly": false,
+        "required": false,
+        "detail_view": true,
+        "list_view": false,
+        "filter_view": false,
+        "perm_level": 0
+      },
+      {
+        "id": "",
+        "name": "tax_rate",
+        "label": "Tax Rate (%)",
+        "type": "float",
+        "display": 2,
+        "readonly": true,
+        "required": false,
+        "detail_view": true,
+        "list_view": false,
+        "filter_view": false,
+        "perm_level": 0
+      },
+      {
+        "id": "",
+        "name": "tax_preference",
+        "label": "TAX Preference",
+        "type": "option",
+        "options": "Inclusive,Exclusive",
+        "default": "Exclusive",
+        "display": "select",
+        "max": 1,
+        "readonly": false,
+        "required": true,
+        "detail_view": true,
+        "list_view": false,
+        "filter_view": false,
+        "perm_level": 0
+      }
+    ],
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "section_break_other_chrg",
+    "label": "Add Other Charges & Discount (Optional)",
+    "type": "section",
+    "display": 2
+  },
+  {
+    "id": "",
+    "name": "shipping_charge",
+    "label": "Shipping Charge",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "default": 0,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "transaction_charge",
+    "label": "Transaction Charge",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "default": 0,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "gift_wrap_charge",
+    "label": "Gift Wrap Charge",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "default": 0,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "additional_discount",
+    "label": "Additional Discount",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "default": 0,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "section_break_final_chrg",
+    "label": "Final Charges",
+    "type": "section",
+    "display": 1
+  },
+  {
+    "id": "",
+    "name": "total_order_value",
+    "label": "Total Order Value",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "section_break_pmt_det",
+    "type": "section",
+    "label": "Payment Details",
+    "display": 1
+  },
+  {
+    "id": "",
+    "name": "payment_method",
+    "label": "Payment Method",
+    "type": "option",
+    "options": "cod,prepaid",
+    "display": "select",
+    "max": 1,
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "prepaid_amount",
+    "label": "Prepaid Amount",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "default": 0,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "remaining_cod_amount",
+    "label": "Remaining COD Amount",
+    "type": "unit",
+    "display": "currency",
+    "display_value": "Rupees",
+    "default": 0,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "section_break_pkg_det",
+    "type": "section",
+    "label": "Package Details",
+    "display": 2
+  },
+  {
+    "id": "",
+    "name": "length",
+    "label": "Length",
+    "type": "unit",
+    "display": "dimension",
+    "display_value": "CM",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "breadth",
+    "label": "Breadth",
+    "type": "unit",
+    "display": "dimension",
+    "display_value": "CM",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "height",
+    "label": "Height",
+    "type": "unit",
+    "display": "dimension",
+    "display_value": "CM",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "dead_weight",
+    "label": "Dead Weight",
+    "type": "unit",
+    "display": "weight",
+    "display_value": "Kg",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "volumetric_weight",
+    "label": "Volumetric Weight",
+    "type": "unit",
+    "display": "weight",
+    "display_value": "Kg",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "shipment_dates_section",
+    "type": "section",
+    "label": "Shipment Dates",
+    "display": 1
+  },
+  {
+    "id": "",
+    "name": "promised_delivery_date",
+    "label": "Promised Delivery Date",
+    "type": "date",
+    "display": "YYYY-MM-DD",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "estimated_delivery_date",
+    "label": "Estimated Delivery Date",
+    "type": "date",
+    "display": "YYYY-MM-DD",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "pickup_date",
+    "label": "Pickup Date",
+    "type": "date",
+    "display": "YYYY-MM-DD",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "delivered_date",
+    "label": "Delivered Date",
+    "type": "date",
+    "display": "YYYY-MM-DD",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "section_break_other_det",
+    "type": "section",
+    "label": "Other Details",
+    "display": 2
+  },
+  {
+    "id": "",
+    "name": "order_channel",
+    "label": "Order channel",
+    "type": "link",
+    "object_type": "order_channel",
+    "readonly": false,
+    "required": true
+  },
+  {
+    "id": "",
+    "name": "courier_partner",
+    "label": "Courier Partner",
+    "type": "option",
+    "options": "delhivery,ekart,xpressbees,bluedart,shadowfax,shreemaruti,amazon",
+    "display": "select",
+    "max": 1,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "sort_code",
+    "label": "Sort Code",
+    "type": "text",
+    "max": 255,
+    "min": 1,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "courier_mode",
+    "label": "Courier Mode",
+    "type": "text",
+    "max": 255,
+    "min": 1,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "created_by",
+    "label": "Created By",
+    "type": "link",
+    "object_type": "users",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "created_at",
+    "label": "Created At",
+    "type": "datetime",
+    "display": "DD-MM-YYYY HH:MM:SS",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "updated_at",
+    "label": "Updated At",
+    "type": "datetime",
+    "display": "DD-MM-YYYY HH:MM:SS",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "order_tag",
+    "label": "Order Tag",
+    "type": "text",
+    "max": 255,
+    "min": 1,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "notes",
+    "label": "Notes",
+    "type": "textarea",
+    "min": 1,
+    "readonly": false,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "integration_details_section",
+    "type": "section",
+    "label": "Integration Details",
+    "display": 1
+  },
+  {
+    "id": "",
+    "name": "ecom_linked_mapping",
+    "label": "Linked Mapping",
+    "type": "link",
+    "object_type": "order_ecommerce_mapping",
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "ecom_platform",
+    "label": "Ecom Platform",
+    "type": "text",
+    "max": 255,
+    "min": 1,
+    "readonly": true,
+    "required": false
+  },
+  {
+    "id": "",
+    "name": "ecom_order_name",
+    "label": "Ecom Order Name",
+    "type": "text",
+    "max": 255,
+    "min": 1,
+    "readonly": true,
+    "required": false
+  }
+]

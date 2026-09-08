@@ -12,7 +12,7 @@ class DynamicFormValidator {
     required DynamicFormController controller,
   }) {
     if (!field.visible || !field.visibleWhen.matches(controller)) return null;
-    if (field.access == DynamicFieldAccess.disabled) return null;
+    if (field.access != DynamicFieldAccess.editable) return null;
 
     final rules = <ValidationRule>[
       if (field.required ||

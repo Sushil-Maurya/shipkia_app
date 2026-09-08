@@ -25,6 +25,8 @@ class OptionsDynamicFieldRenderer implements DynamicFieldRenderer {
     final enabled = context.access.canEdit && field.options.isNotEmpty;
     return Builder(
       builder: (buildContext) => DropdownButtonFormField<Object?>(
+        key: ValueKey('${field.id}-${context.value}'),
+        isExpanded: true,
         initialValue:
             field.options.any((option) => option.value == context.value)
             ? context.value
@@ -34,7 +36,7 @@ class OptionsDynamicFieldRenderer implements DynamicFieldRenderer {
               (option) => DropdownMenuItem<Object?>(
                 value: option.value,
                 enabled: option.enabled && enabled,
-                child: Text(option.label),
+                child: Text(option.label, overflow: TextOverflow.ellipsis),
               ),
             )
             .toList(),

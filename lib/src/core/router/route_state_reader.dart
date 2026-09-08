@@ -8,9 +8,14 @@ class RouteStateReader {
   String? requiredEntityId(String name) {
     final value = state.pathParameters[name]?.trim();
     if (value == null || value.isEmpty) return null;
-    final decoded = Uri.decodeComponent(value);
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(decoded)) return null;
-    return decoded;
+    // go_router has already decoded the path parameter. Backend identities
+    // can contain punctuation; the repository encodes them for the API path.
+    if (value == '.' ||
+        value == '..' ||
+        RegExp(r'[\x00-\x1f\x7f]').hasMatch(value)) {
+      return null;
+    }
+    return value;
   }
 
   String? optionalQueryValue(

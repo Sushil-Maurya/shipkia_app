@@ -13,3 +13,5 @@ export 'state/dynamic_form_controller.dart';
 export 'state/dynamic_form_field_state.dart';
 export 'validation/dynamic_form_validator.dart';
 export 'validation/validation_rule.dart';
+
+export 'api/api_form_adapter.dart';

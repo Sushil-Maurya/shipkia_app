@@ -1,3 +1,4 @@
+import '../components/fields/api_field_renderers.dart';
 import '../models/dynamic_field_type.dart';
 import '../components/fields/boolean_field_renderer.dart';
 import '../components/fields/date_time_field_renderer.dart';
@@ -19,6 +20,12 @@ void registerShipKiaCoreFields(DynamicFieldRegistry registry) {
   const dates = DateTimeDynamicFieldRenderer();
 
   registry.registerAll({
+    DynamicFieldType.unit: text,
+    DynamicFieldType.json: text,
+    DynamicFieldType.dateTime: dates,
+    DynamicFieldType.link: const LinkApiFieldRenderer(),
+    DynamicFieldType.grid: const GridApiFieldRenderer(),
+    DynamicFieldType.unsupported: const UnsupportedApiFieldRenderer(),
     DynamicFieldType.text: text,
     DynamicFieldType.email: text,
     DynamicFieldType.phone: text,
@@ -40,7 +47,7 @@ void registerShipKiaCoreFields(DynamicFieldRegistry registry) {
 void registerShipKiaDomainFields(DynamicFieldRegistry registry) {
   const text = TextDynamicFieldRenderer();
   registry.registerAll({
-    DynamicFieldType.pincode: text,
+    DynamicFieldType.pincode: const PostalApiFieldRenderer(),
     DynamicFieldType.address: text,
     DynamicFieldType.product: text,
     DynamicFieldType.quantity: text,

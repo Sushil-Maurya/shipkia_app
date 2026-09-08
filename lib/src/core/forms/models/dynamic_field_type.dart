@@ -19,6 +19,12 @@ enum DynamicFieldType {
   quantity,
   hidden,
   custom,
+  unit,
+  link,
+  grid,
+  dateTime,
+  json,
+  unsupported,
   unknown;
 
   static DynamicFieldType fromWire(String? value) {
@@ -28,6 +34,19 @@ enum DynamicFieldType {
       if (type.name == normalized) return type;
     }
     return switch (normalized) {
+      'int' || 'integer' => DynamicFieldType.number,
+      'float' => DynamicFieldType.decimal,
+      'option' || 'autocomplete' => DynamicFieldType.select,
+      'bool' || 'boolean' => DynamicFieldType.checkbox,
+      'postal_code' => DynamicFieldType.pincode,
+      'datetime' => DynamicFieldType.dateTime,
+      'editableGrid' => DynamicFieldType.grid,
+      'uid' => DynamicFieldType.text,
+      'attachment' ||
+      'supportAttachment' ||
+      'imageUploader' ||
+      'apikey' ||
+      'conditionalFieldGroup' => DynamicFieldType.unsupported,
       'switch' => DynamicFieldType.switchField,
       'multiselect' || 'multi_select' => DynamicFieldType.multiSelect,
       _ => DynamicFieldType.unknown,

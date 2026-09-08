@@ -90,7 +90,7 @@ class _NdrScreenState extends State<NdrScreen> {
             label: 'Schedule reattempt',
             icon: Icons.restart_alt,
             onPressed: () {},
-            fullWidth: true,
+            fullWidth: false,
           ),
         ),
       ],

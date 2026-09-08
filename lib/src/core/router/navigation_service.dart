@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../data/shipkia_mock_data.dart';
+import '../../features/orders/domain/order_summary.dart';
 import 'app_route_paths.dart';
 import 'navigation_intent.dart';
 

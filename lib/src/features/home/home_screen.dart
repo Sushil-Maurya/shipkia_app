@@ -1,162 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../core/feedback/shipkia_feedback.dart';
-import '../../core/router/navigation_service.dart';
-import '../../data/shipkia_mock_data.dart';
+import '../../core/auth/shipkia_auth_scope.dart';
 import '../../design_system/design_system.dart';
-import '../../theme/shipkia_colors.dart';
-import '../../widgets/shipkia_shell_widgets.dart';
-import '../../widgets/shipkia_widgets.dart';
 
+/// Member workspace, matching the web Home rather than invented dashboard metrics.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async => Future<void>.delayed(ShipKiaMotion.refresh),
-      child: ListView(
-        children: [
-          ShipKiaCommandBar(
-            hint: 'Search orders, AWB, customers',
-            trailing: AppIconButton(
-              icon: Icons.tune,
-              onPressed: () => showAppBottomSheet<void>(
-                context: context,
-                builder: (_) => const _HomeFiltersSheet(),
-              ),
-              tooltip: 'Filters',
-            ),
-          ),
+    final name = context
+        .dependOnInheritedWidgetOfExactType<ShipKiaAuthScope>()
+        ?.notifier
+        ?.profile
+        ?.name
+        .trim();
+    const actions = [
+      ('Track shipment', 'Find shipment status.', '/tracking', Icons.search),
+      (
+        'Orders',
+        'Manage active shipments.',
+        '/orders',
+        Icons.inventory_2_outlined,
+      ),
+      (
+        'Returns',
+        'Track return pickups.',
+        '/return_orders',
+        Icons.assignment_return_outlined,
+      ),
+      (
+        'Rate card',
+        'Compare shipping rates.',
+        '/tools/rate-card',
+        Icons.local_shipping_outlined,
+      ),
+      (
+        'Serviceability',
+        'Check pincode coverage.',
+        '/tools/serviceability',
+        Icons.route_outlined,
+      ),
+      (
+        'Wallet',
+        'View wallet transactions.',
+        '/wallet_transactions',
+        Icons.account_balance_wallet_outlined,
+      ),
+      (
+        'Support',
+        'Resolve shipping issues.',
+        '/support_ticket',
+        Icons.support_agent,
+      ),
+    ];
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Welcome ${name == null || name.isEmpty ? 'there' : name}',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Your shipping workspace is ready. Pick a workflow below and keep the day moving.',
+        ),
+        const SizedBox(height: 24),
+        Text('Quick actions', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        for (final action in actions)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Dispatch Console',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
+            padding: const EdgeInsets.only(bottom: 10),
+            child: AppCard(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                const SkSetupChip(),
-              ],
+                leading: Icon(action.$4),
+                title: Text(action.$1),
+                subtitle: Text(action.$2),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(action.$3),
+              ),
             ),
           ),
-          SizedBox(
-            height: 112,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (context, index) => SizedBox(
-                width: 152,
-                child: SkMetricTile(metric: metrics[index]),
-              ),
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemCount: metrics.length,
-            ),
-          ),
-          SkSectionHeader(
-            title: 'Priority Orders',
-            action: Text(
-              'View all',
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(color: ShipKiaColors.shipkiaBlue),
-            ),
-          ),
-          for (final order in orders.take(3))
-            SkOrderRow(
-              order: order,
-              onTap: () => context.toOrderDetails(order.id, order: order),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeFiltersSheet extends StatelessWidget {
-  const _HomeFiltersSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        ShipKiaSpacing.lg,
-        0,
-        ShipKiaSpacing.lg,
-        ShipKiaSpacing.lg,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Filters (3)',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              AppIconButton(
-                icon: Icons.close,
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: 'Close filters',
-              ),
-            ],
-          ),
-          const SizedBox(height: ShipKiaSpacing.md),
-          Text(
-            'Shipment Status',
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-          const SizedBox(height: ShipKiaSpacing.sm),
-          Wrap(
-            children: [
-              AppChip(label: 'Ready', selected: true, onSelected: (_) {}),
-              AppChip(label: 'In Transit', selected: true, onSelected: (_) {}),
-              AppChip(label: 'NDR', onSelected: (_) {}),
-              AppChip(label: 'Delivered', onSelected: (_) {}),
-            ],
-          ),
-          const SizedBox(height: ShipKiaSpacing.lg),
-          Text('Courier', style: Theme.of(context).textTheme.labelSmall),
-          const SizedBox(height: ShipKiaSpacing.sm),
-          Wrap(
-            children: [
-              AppChip(label: 'Delhivery', selected: true, onSelected: (_) {}),
-              AppChip(label: 'Blue Dart', onSelected: (_) {}),
-              AppChip(label: 'Xpressbees', onSelected: (_) {}),
-            ],
-          ),
-          const SizedBox(height: ShipKiaSpacing.xl),
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  label: 'Clear',
-                  onPressed: () {},
-                  variant: AppButtonVariant.secondary,
-                ),
-              ),
-              const SizedBox(width: ShipKiaSpacing.sm),
-              Expanded(
-                child: AppButton(
-                  label: 'Apply filters',
-                  icon: Icons.check,
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ShipKiaFeedback.info(
-                      'Filters applied.',
-                      eventKey: 'home-filters-applied',
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

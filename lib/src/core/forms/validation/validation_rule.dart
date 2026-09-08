@@ -118,7 +118,9 @@ class RangeRule implements ValidationRule {
   }) {
     if (value == null || value.toString().trim().isEmpty) return null;
     final number = value is num ? value : num.tryParse(value.toString());
-    if (number == null) return '$label must be a number.';
+    if (number == null || !number.isFinite) {
+      return '$label must be a finite number.';
+    }
     if (min != null && number < min!) return '$label must be at least $min.';
     if (max != null && number > max!) return '$label must be at most $max.';
     return null;

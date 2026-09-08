@@ -41,7 +41,10 @@ class _AppCardState extends State<AppCard> {
           borderRadius: ShipKiaRadius.mdBorder,
           boxShadow: _pressed ? ShipKiaElevation.none : ShipKiaElevation.raised,
         ),
-        child: Padding(padding: widget.padding, child: widget.child),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Padding(padding: widget.padding, child: widget.child),
+        ),
       ),
     );
 

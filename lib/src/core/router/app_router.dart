@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 
-import '../../data/shipkia_mock_data.dart';
+import '../../features/orders/domain/order_summary.dart';
 import '../../design_system/design_system.dart';
 import '../../features/account/account_screen.dart';
 import '../../features/auth/login_screen.dart';
@@ -275,7 +275,10 @@ class AppRouter {
                       path: ':name',
                       pageBuilder: (context, state) => shipKiaPage<void>(
                         state: state,
-                        child: WebModuleScreen(route: route),
+                        child: WebModuleScreen(
+                          route: route,
+                          recordId: state.pathParameters['name'],
+                        ),
                       ),
                     ),
                   ]

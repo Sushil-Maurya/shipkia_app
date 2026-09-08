@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shipkia_app/src/core/api/api_scope.dart';
+
+import 'support/recording_api_client.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipkia_app/src/core/auth/shipkia_auth_controller.dart';
 import 'package:shipkia_app/src/core/auth/shipkia_auth_scope.dart';
@@ -22,7 +26,7 @@ void main() {
     await tester.pumpWidget(_routerApp(auth, initialLocation: '/login'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Dispatch Console'), findsWidgets);
+    expect(find.text('Welcome there'), findsWidgets);
     expect(find.text('Login to ShipKia'), findsNothing);
   });
 
@@ -61,12 +65,24 @@ void main() {
     expect(find.text('Order Details'), findsOneWidget);
   });
 
+  testWidgets('order detail preserves percent characters in backend identity', (
+    tester,
+  ) async {
+    final auth = _auth(ShipKiaAuthStatus.authenticated);
+    await tester.pumpWidget(
+      _routerApp(auth, initialLocation: '/orders/ORDER%2542'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Order Details'), findsOneWidget);
+    expect(find.text('ORDER%42'), findsWidgets);
+  });
+
   testWidgets('authorized users can open orders', (tester) async {
     final auth = _auth(ShipKiaAuthStatus.authenticated);
     await tester.pumpWidget(_routerApp(auth, initialLocation: '/orders'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('4 records'), findsOneWidget);
+    expect(find.textContaining('4 orders'), findsOneWidget);
     expect(find.text('ORD-10491'), findsOneWidget);
   });
 
@@ -78,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Returns'), findsWidgets);
-    expect(find.text('API route connected'), findsOneWidget);
+    expect(find.text('No returns found'), findsOneWidget);
 
     await tester.pumpWidget(
       _routerApp(auth, initialLocation: '/settings/products'),
@@ -86,7 +102,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Products'), findsWidgets);
-    expect(find.text('API route connected'), findsOneWidget);
+    expect(find.text('No products found'), findsOneWidget);
+  });
+
+  testWidgets('direct asset link opens the record rather than its list', (
+    tester,
+  ) async {
+    final auth = _auth(ShipKiaAuthStatus.authenticated);
+    await tester.pumpWidget(
+      _routerApp(auth, initialLocation: '/settings/products/PRODUCT-42'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Product detail fixture'), findsWidgets);
+    expect(find.text('No products found'), findsNothing);
   });
 
   testWidgets('missing permission redirects to forbidden screen', (
@@ -117,7 +145,7 @@ void main() {
     await tester.pumpWidget(_routerApp(auth, initialLocation: '/orders'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('4 records'), findsOneWidget);
+    expect(find.textContaining('4 orders'), findsOneWidget);
 
     auth.expireSession();
     await tester.pumpAndSettle();
@@ -165,10 +193,49 @@ Widget _routerApp(
   );
   return ShipKiaAuthScope(
     controller: auth,
-    child: MaterialApp.router(
-      theme: ShipKiaTheme.light,
-      darkTheme: ShipKiaTheme.dark,
-      routerConfig: router.router,
+    child: ShipKiaApiScope(
+      apiClient: RecordingApiClient((config) async {
+        if (config.path == '/oms/orders/records/list') {
+          return pageFixture([
+            for (final id in [
+              'ORD-10491',
+              'ORD-10490',
+              'ORD-10489',
+              'ORD-10488',
+            ])
+              orderFixture(id),
+          ]);
+        }
+        if (config.path.startsWith('/oms/orders/records/')) {
+          return {
+            'value': orderFixture(
+              Uri.decodeComponent(config.path.split('/').last),
+            ),
+            'fields': [
+              {
+                'name': 'delivery_full_name',
+                'type': 'text',
+                'label': 'Delivery Full Name',
+              },
+            ],
+          };
+        }
+        if (config.path == '/oms/products/records/PRODUCT-42') {
+          return {
+            'value': {
+              'id': 'PRODUCT-42',
+              'product_name': 'Product detail fixture',
+            },
+            'fields': [],
+          };
+        }
+        return pageFixture([]);
+      }),
+      child: MaterialApp.router(
+        theme: ShipKiaTheme.light,
+        darkTheme: ShipKiaTheme.dark,
+        routerConfig: router.router,
+      ),
     ),
   );
 }

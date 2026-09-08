@@ -52,6 +52,7 @@ class ShipKiaTheme {
         backgroundColor: surface,
         foregroundColor: text,
         titleTextStyle: TextStyle(
+          fontFamily: ShipKiaTypography.fontFamily,
           color: text,
           fontSize: 16,
           fontWeight: FontWeight.w800,
@@ -86,18 +87,32 @@ class ShipKiaTheme {
           borderSide: const BorderSide(color: ShipKiaColors.shipkiaBlue),
         ),
       ),
+      chipTheme: const ChipThemeData(
+        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        labelPadding: EdgeInsets.symmetric(horizontal: 4),
+        labelStyle: TextStyle(fontSize: 12, height: 1.2),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        ),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(0, 40),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(0, 40),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           side: BorderSide(color: border),
           shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),
           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
