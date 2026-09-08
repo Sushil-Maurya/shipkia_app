@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
-enum ShipmentStatus { readyToShip, inTransit, delivered, ndr, cancelled }
+enum ShipmentStatus {
+  newOrder,
+  readyToShip,
+  readyToPickup,
+  inTransit,
+  delivered,
+  ndr,
+  rto,
+  cancelled,
+}
 
 class OrderSummary {
   const OrderSummary({
@@ -220,14 +229,20 @@ final orders = [
 
 String statusLabel(ShipmentStatus status) {
   switch (status) {
+    case ShipmentStatus.newOrder:
+      return 'New';
     case ShipmentStatus.readyToShip:
       return 'Ready to Ship';
+    case ShipmentStatus.readyToPickup:
+      return 'Ready to Pickup';
     case ShipmentStatus.inTransit:
       return 'In Transit';
     case ShipmentStatus.delivered:
       return 'Delivered';
     case ShipmentStatus.ndr:
       return 'NDR';
+    case ShipmentStatus.rto:
+      return 'RTO';
     case ShipmentStatus.cancelled:
       return 'Cancelled';
   }
@@ -304,13 +319,17 @@ ShipmentStatus _shipmentStatus(String? value) {
     RegExp(r'[^a-z]'),
     '',
   );
+  if (normalized.contains('rto')) return ShipmentStatus.rto;
   if (normalized.contains('ndr') ||
       normalized.contains('attempt') ||
-      normalized.contains('rto') ||
       normalized.contains('undelivered')) {
     return ShipmentStatus.ndr;
   }
-  if (normalized == 'new' || normalized.contains('readytoship')) {
+  if (normalized == 'new') return ShipmentStatus.newOrder;
+  if (normalized.contains('readytopickup')) {
+    return ShipmentStatus.readyToPickup;
+  }
+  if (normalized.contains('readytoship')) {
     return ShipmentStatus.readyToShip;
   }
   if (normalized.contains('transit') ||

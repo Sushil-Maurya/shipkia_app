@@ -101,7 +101,7 @@ class ShipKiaCommandBar extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
         child: Row(
           children: [
             Expanded(
@@ -115,7 +115,7 @@ class ShipKiaCommandBar extends StatelessWidget {
                 ),
               ),
             ),
-            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+            if (trailing != null) ...[const SizedBox(width: 5), trailing!],
           ],
         ),
       ),

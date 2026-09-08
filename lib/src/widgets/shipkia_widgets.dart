@@ -4,6 +4,36 @@ import '../data/shipkia_mock_data.dart';
 import '../design_system/design_system.dart';
 import '../theme/shipkia_colors.dart';
 
+const shipmentStatusColors = <ShipmentStatus, Color>{
+  ShipmentStatus.newOrder: ShipKiaColors.sky,
+  ShipmentStatus.readyToShip: ShipKiaColors.shipkiaBlue,
+  ShipmentStatus.readyToPickup: ShipKiaColors.warning,
+  ShipmentStatus.inTransit: ShipKiaColors.info,
+  ShipmentStatus.delivered: ShipKiaColors.success,
+  ShipmentStatus.ndr: ShipKiaColors.destructive,
+  ShipmentStatus.rto: ShipKiaColors.warning,
+  ShipmentStatus.cancelled: ShipKiaColors.mutedInk,
+};
+
+const shipmentStatusIcons = <ShipmentStatus, IconData>{
+  ShipmentStatus.newOrder: Icons.add_box_outlined,
+  ShipmentStatus.readyToShip: Icons.inventory_2_outlined,
+  ShipmentStatus.readyToPickup: Icons.storefront_outlined,
+  ShipmentStatus.inTransit: Icons.local_shipping_outlined,
+  ShipmentStatus.delivered: Icons.check_circle_outline,
+  ShipmentStatus.ndr: Icons.report_problem_outlined,
+  ShipmentStatus.rto: Icons.assignment_return_outlined,
+  ShipmentStatus.cancelled: Icons.cancel_outlined,
+};
+
+Color shipmentStatusColor(ShipmentStatus status) {
+  return shipmentStatusColors[status] ?? ShipKiaColors.mutedInk;
+}
+
+IconData shipmentStatusIcon(ShipmentStatus status) {
+  return shipmentStatusIcons[status] ?? Icons.inventory_2_outlined;
+}
+
 class SkSectionHeader extends StatelessWidget {
   const SkSectionHeader({required this.title, this.action, super.key});
 
@@ -74,31 +104,21 @@ class SkStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (status) {
-      ShipmentStatus.readyToShip => ShipKiaColors.shipkiaBlue,
-      ShipmentStatus.inTransit => ShipKiaColors.info,
-      ShipmentStatus.delivered => ShipKiaColors.success,
-      ShipmentStatus.ndr => ShipKiaColors.destructive,
-      ShipmentStatus.cancelled => ShipKiaColors.mutedInk,
-    };
-    final icon = switch (status) {
-      ShipmentStatus.readyToShip => Icons.inventory_2_outlined,
-      ShipmentStatus.inTransit => Icons.local_shipping_outlined,
-      ShipmentStatus.delivered => Icons.check_circle_outline,
-      ShipmentStatus.ndr => Icons.report_problem_outlined,
-      ShipmentStatus.cancelled => Icons.cancel_outlined,
-    };
+    final color = shipmentStatusColor(status);
+    final icon = shipmentStatusIcon(status);
 
     return AnimatedContainer(
       duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
       curve: ShipKiaMotion.standard,
+      height: 22,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: ShipKiaRadius.smBorder,
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      child: Center(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -106,8 +126,11 @@ class SkStatusBadge extends StatelessWidget {
             const SizedBox(width: ShipKiaSpacing.xs),
             Text(
               statusLabel(status).toUpperCase(),
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(color: color, fontWeight: FontWeight.w900),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
             ),
           ],
         ),
@@ -216,7 +239,7 @@ class SkOrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 5),
       child: AppCard(
         padding: EdgeInsets.zero,
         onTap: onTap,
@@ -237,7 +260,7 @@ class SkOrderRow extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 9, 8, 9),
+              padding: const EdgeInsets.fromLTRB(13, 7, 7, 7),
               child: Column(
                 children: [
                   Row(
@@ -295,9 +318,9 @@ class SkOrderRow extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 9),
+                  const SizedBox(height: 5),
                   const Divider(),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       _Meta(label: 'AWB', value: order.awb),

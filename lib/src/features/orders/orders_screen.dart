@@ -12,6 +12,7 @@ import '../../design_system/design_system.dart';
 import '../../theme/shipkia_colors.dart';
 import '../../widgets/shipkia_shell_widgets.dart';
 import '../../widgets/shipkia_widgets.dart';
+import 'order_filters_sheet.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({this.query = const OrdersRouteQuery(), super.key});
@@ -27,6 +28,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   List<OrderSummary>? _liveOrders;
   int? _liveTotal;
   bool _loading = false;
+  OrderListFilters _filters = const OrderListFilters();
 
   static const _stageTabs = <String>[
     'New',
@@ -54,7 +56,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
   void _loadIfNeeded() {
     final apiClient = ShipKiaApiScope.maybeOf(context);
     if (apiClient == null) return;
-    final key = '${widget.query.stage}|${widget.query.search}';
+    final key =
+        '${widget.query.stage}|${widget.query.search}|${_filters.cacheKey}';
     if (_lastRequestKey == key) return;
     _lastRequestKey = key;
     setState(() => _loading = true);
@@ -75,7 +78,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ApiRequestConfig(
           method: HttpMethod.post,
           path: WebModuleCatalog.listEndpointFor('orders'),
-          data: _stageFilterPayload(stage),
+          data: _filters.toPayload(stage: stage),
           params: params,
           showSuccessMessage: false,
           showErrorMessage: false,
@@ -107,16 +110,33 @@ class _OrdersScreenState extends State<OrdersScreen> {
           hint: widget.query.search?.isNotEmpty == true
               ? widget.query.search!
               : 'Search by order, AWB, customer',
-          trailing: AppButton(label: 'Add', icon: Icons.add, onPressed: () {}),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppButton(
+                label: 'Add',
+                icon: Icons.add,
+                height: 28,
+                onPressed: () {},
+              ),
+              const SizedBox(width: 3),
+              AppIconButton(
+                icon: Icons.more_vert,
+                onPressed: _openActions,
+                tooltip: 'Order actions',
+                size: 28,
+              ),
+            ],
+          ),
         ),
         SizedBox(
-          height: 42,
+          height: 30,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(10, 3, 10, 0),
             scrollDirection: Axis.horizontal,
             children: [
               for (final stage in _stageTabs)
-                AppChip(
+                _StageChip(
                   label: stage,
                   selected: selectedStage == stage,
                   onSelected: (_) => context.toOrders(stage: stage),
@@ -125,7 +145,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(12, 1, 12, 3),
           child: Row(
             children: [
               Text(
@@ -134,15 +154,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ?.copyWith(color: ShipKiaColors.mutedInk),
               ),
               const Spacer(),
-              AppButton(
-                label: 'Export',
-                icon: Icons.file_download_outlined,
-                onPressed: () {},
-                variant: AppButtonVariant.secondary,
-              ),
+              if (!_filters.isEmpty)
+                Text(
+                  '${_filters.activeCount} filters',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: ShipKiaColors.shipkiaBlue,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
             ],
           ),
         ),
+        if (_loading && _liveOrders != null)
+          const LinearProgressIndicator(minHeight: 2),
         Expanded(
           child: _loading && _liveOrders == null
               ? const Center(child: CircularProgressIndicator())
@@ -153,6 +177,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   actionLabel: 'Create order',
                 )
               : AppStaggeredList(
+                  padding: EdgeInsets.zero,
                   children: [
                     for (final order in visibleOrders)
                       SkOrderRow(
@@ -167,33 +192,125 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
+  void _openActions() {
+    showAppActionSheet(
+      context: context,
+      title: 'Order Actions',
+      items: [
+        AppActionSheetItem(
+          label: 'Reload',
+          icon: Icons.refresh,
+          onSelected: _reload,
+        ),
+        AppActionSheetItem(
+          label: 'Export',
+          icon: Icons.file_download_outlined,
+          onSelected: () {},
+        ),
+        AppActionSheetItem(
+          label: 'Filters',
+          icon: Icons.filter_list,
+          onSelected: _openFilters,
+        ),
+      ],
+    );
+  }
+
+  void _reload() {
+    setState(() => _lastRequestKey = null);
+    _loadIfNeeded();
+  }
+
+  Future<void> _openFilters() async {
+    final next = await showOrderFiltersSheet(
+      context: context,
+      filters: _filters,
+    );
+    if (next == null || !mounted) return;
+    setState(() {
+      _filters = next;
+      _lastRequestKey = null;
+    });
+    _loadIfNeeded();
+  }
+
   List<OrderSummary> _filteredOrders(List<OrderSummary> source) {
     final stage = widget.query.stage;
     if (stage == null || stage.isEmpty || stage == 'All') return source;
     return source.where((order) => _stageLabel(order.status) == stage).toList();
   }
 
-  Object? _stageFilterPayload(String? stage) {
-    if (stage == null || stage.isEmpty || stage == 'All') return null;
-    return {
-      'filters': {
-        'id': 'flt_stage',
-        'type': 'nested',
-        'connector': 'and',
-        'filterSet': [
-          {'id': 'stage', 'opr': '=', 'value': stage},
-        ],
-      },
-    };
-  }
-
   String _stageLabel(ShipmentStatus status) {
     return switch (status) {
+      ShipmentStatus.newOrder => 'New',
       ShipmentStatus.readyToShip => 'Ready to Ship',
+      ShipmentStatus.readyToPickup => 'Ready to Pickup',
       ShipmentStatus.inTransit => 'In-Transit',
       ShipmentStatus.delivered => 'Delivered',
       ShipmentStatus.ndr => 'RTO',
+      ShipmentStatus.rto => 'RTO',
       ShipmentStatus.cancelled => 'Cancelled',
     };
+  }
+}
+
+class _StageChip extends StatelessWidget {
+  const _StageChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected
+        ? ShipKiaColors.paper
+        : ShipKiaColors.textPrimary(context);
+    final background = selected
+        ? ShipKiaColors.shipkiaBlue
+        : ShipKiaColors.surface(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: ShipKiaRadius.smBorder,
+          onTap: () => onSelected(!selected),
+          child: AnimatedContainer(
+            duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+            curve: ShipKiaMotion.standard,
+            height: 24,
+            constraints: const BoxConstraints(minWidth: 36),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: ShipKiaRadius.smBorder,
+              border: Border.all(
+                color: selected
+                    ? ShipKiaColors.shipkiaBlue
+                    : ShipKiaColors.border(context),
+              ),
+            ),
+            child: AnimatedDefaultTextStyle(
+              duration: ShipKiaMotion.duration(context, ShipKiaMotion.fast),
+              curve: ShipKiaMotion.standard,
+              style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w800,
+                height: 1,
+                fontSize: 9,
+              ),
+              child: Text(label, textAlign: TextAlign.center),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
