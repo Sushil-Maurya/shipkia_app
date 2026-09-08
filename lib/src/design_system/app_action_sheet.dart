@@ -12,13 +12,13 @@ class AppActionSheetItem {
   const AppActionSheetItem({
     required this.label,
     required this.icon,
-    required this.onSelected,
+    this.onSelected,
     this.subtitle,
   });
 
   final String label;
   final IconData icon;
-  final VoidCallback onSelected;
+  final VoidCallback? onSelected;
   final String? subtitle;
 }
 
@@ -53,14 +53,21 @@ class AppActionSheet extends StatelessWidget {
             const SizedBox(height: ShipKiaSpacing.sm),
             for (final item in items)
               AppListTile(
-                leading: Icon(item.icon, color: ShipKiaColors.shipkiaBlue),
+                leading: Icon(
+                  item.icon,
+                  color: item.onSelected == null
+                      ? Theme.of(context).disabledColor
+                      : ShipKiaColors.shipkiaBlue,
+                ),
                 title: item.label,
                 subtitle: item.subtitle,
                 trailing: const Icon(Icons.chevron_right, size: 18),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  item.onSelected();
-                },
+                onTap: item.onSelected == null
+                    ? null
+                    : () {
+                        Navigator.of(context).pop();
+                        item.onSelected!();
+                      },
               ),
           ],
         ),

@@ -19,7 +19,10 @@ class TextDynamicFieldRenderer implements DynamicFieldRenderer {
         field.metadata['display'] is Map) {
       return const LinkApiFieldRenderer(allowFreeText: true).build(context);
     }
-    final value = context.value?.toString();
+    final rawValue = context.value?.toString();
+    final value = type == DynamicFieldType.phone
+        ? rawValue?.replaceFirst(RegExp(r'^\+91[- ]?'), '')
+        : rawValue;
     final keyboardType = field.keyboardType ?? _keyboardType(type);
     final inputFormatters = field.inputFormatters ?? _formatters(type);
 
@@ -30,16 +33,38 @@ class TextDynamicFieldRenderer implements DynamicFieldRenderer {
         key: ValueKey(field.id),
         label: _label(context),
         hintText: field.placeholder,
+        prefix: type == DynamicFieldType.phone
+            ? const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('\u{1F1EE}\u{1F1F3}', semanticsLabel: 'India'),
+                    SizedBox(width: 6),
+                    Text('+91'),
+                    SizedBox(width: 8),
+                    SizedBox(height: 20, child: VerticalDivider(width: 1)),
+                  ],
+                ),
+              )
+            : null,
         helperText: field.helperText,
         suffix: field.type == DynamicFieldType.unit
-            ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(switch (field.metadata['unit_category']) {
-                  'currency' => '\u20b9',
-                  'weight' => 'KG',
-                  'length' => 'CM',
-                  _ => '',
-                }),
+            ? SizedBox(
+                height: 40,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  widthFactor: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(switch (field.metadata['unit_category']) {
+                      'currency' => '\u20b9',
+                      'weight' => 'KG',
+                      'length' => 'CM',
+                      _ => '',
+                    }),
+                  ),
+                ),
               )
             : null,
         errorText: context.errorText,

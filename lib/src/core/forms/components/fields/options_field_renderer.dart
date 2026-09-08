@@ -1,3 +1,5 @@
+import 'api_field_renderers.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/design_system.dart';
@@ -20,40 +22,8 @@ class OptionsDynamicFieldRenderer implements DynamicFieldRenderer {
     return _select(context);
   }
 
-  Widget _select(DynamicFieldContext context) {
-    final field = context.field;
-    final enabled = context.access.canEdit && field.options.isNotEmpty;
-    return Builder(
-      builder: (buildContext) => DropdownButtonFormField<Object?>(
-        key: ValueKey('${field.id}-${context.value}'),
-        isExpanded: true,
-        initialValue:
-            field.options.any((option) => option.value == context.value)
-            ? context.value
-            : null,
-        items: field.options
-            .map(
-              (option) => DropdownMenuItem<Object?>(
-                value: option.value,
-                enabled: option.enabled && enabled,
-                child: Text(option.label, overflow: TextOverflow.ellipsis),
-              ),
-            )
-            .toList(),
-        onChanged: enabled ? context.onChanged : null,
-        decoration: InputDecoration(
-          labelText: context.isRequired ? '${field.label} *' : field.label,
-          hintText: field.placeholder,
-          helperText: field.options.isEmpty
-              ? 'No options available.'
-              : field.helperText,
-          errorText: context.errorText,
-          filled: !context.access.canFocus || context.access.isReadOnly,
-          fillColor: ShipKiaColors.surfaceMuted(buildContext),
-        ),
-      ),
-    );
-  }
+  Widget _select(DynamicFieldContext context) =>
+      ApiOptionsField(context: context);
 
   Widget _radioGroup(DynamicFieldContext context) {
     return Column(

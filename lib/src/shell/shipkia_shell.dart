@@ -52,7 +52,13 @@ class _ShipKiaShellState extends State<ShipKiaShell> {
               onOpenModules: () => _scaffoldKey.currentState?.openDrawer(),
               onOpenProfile: () => context.toAccount(),
             ),
-            Expanded(child: widget.navigationShell),
+            Expanded(
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                child: widget.navigationShell,
+              ),
+            ),
           ],
         ),
       ),

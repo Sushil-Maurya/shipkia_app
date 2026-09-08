@@ -15,11 +15,16 @@ abstract final class OrderForm {
   };
 
   static List<Map<String, dynamic>> fields(Object? response) {
-    Map<String, dynamic> normalize(Map<String, dynamic> raw) {
+    Map<String, dynamic> normalize(
+      Map<String, dynamic> raw, {
+      bool productRow = false,
+    }) {
       final f = Map<String, dynamic>.from(raw);
       final name = ApiFormAdapter.nameOf(f);
-      if (hidden.contains(name)) f['form_view'] = false;
-      if (ApiFormAdapter.flag(f['readonly']) && name != 'status') {
+      if (!productRow && hidden.contains(name)) f['form_view'] = false;
+      if (!productRow &&
+          ApiFormAdapter.flag(f['readonly']) &&
+          name != 'status') {
         f['_visibleWhenNotEmpty'] = name;
       }
       if (name.startsWith('billing_')) {
@@ -54,7 +59,12 @@ abstract final class OrderForm {
       }
       if (f['fields'] is List) {
         f['fields'] = ApiFormAdapter.fieldsFrom(f['fields'])
-            .map(normalize)
+            .map(
+              (child) => normalize(
+                child,
+                productRow: productRow || name == 'product_details',
+              ),
+            )
             .toList();
       }
       if (name == 'product_details') {
@@ -72,6 +82,42 @@ abstract final class OrderForm {
         .map(normalize)
         .where((f) => !(f['type'] == 'section' && f['form_view'] == false))
         .toList();
+  }
+
+  static Map<String, dynamic> duplicateValues(Map<String, dynamic> values) {
+    const excluded = {
+      'id',
+      'name',
+      'awb',
+      'reference_id',
+      'stage',
+      'status',
+      'courier_partner',
+      'courier_mode',
+      'download_status',
+      'ecom_linked_mapping',
+      'ecom_order_name',
+      'ecom_platform',
+      'ecom_store_name',
+      'creation',
+      'created_at',
+      'created_by',
+      'modified',
+      'modified_at',
+      'modified_by',
+      'row_id',
+      'updated_at',
+      'pickup_date',
+      'delivered_date',
+      'estimated_delivery_date',
+      'promised_delivery_date',
+      'sort_code',
+      'customer_engagement',
+    };
+    return {
+      for (final e in values.entries)
+        if (!excluded.contains(e.key)) e.key: e.value,
+    };
   }
 
   static num number(Object? value) => num.tryParse('$value') ?? 0;

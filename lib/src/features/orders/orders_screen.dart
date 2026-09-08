@@ -14,6 +14,7 @@ import 'data/orders_repository.dart';
 import 'domain/order_stages.dart';
 import 'domain/order_summary.dart';
 import 'order_filters_sheet.dart';
+import 'order_detail_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({this.query = const OrdersRouteQuery(), super.key});
@@ -100,6 +101,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
+  Future<void> _createOrder() async {
+    final api = _api;
+    if (api == null) return;
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => ShipKiaApiScope(
+          apiClient: api,
+          child: const OrderDetailScreen(orderId: 'new'),
+        ),
+      ),
+    );
+    if (created == true && mounted) await _list.refresh();
+  }
+
   Future<void> _openFilters() async {
     final next = await showOrderFiltersSheet(
       context: context,
@@ -128,33 +143,52 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
                       'Orders',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Your shipping queue, at a glance',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: ShipKiaColors.textSecondary(context),
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        AppIconButton(
+                          icon: Icons.refresh,
+                          tooltip: 'Refresh orders',
+                          size: 30,
+                          onPressed: _repository == null ? null : _list.refresh,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: AppButton(
+                            label: 'Create Order',
+                            icon: Icons.add,
+                            height: 30,
+                            onPressed: _api == null ? null : _createOrder,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              AppIconButton(
-                icon: Icons.refresh,
-                tooltip: 'Refresh orders',
-                size: 48,
-                onPressed: _repository == null ? null : _list.refresh,
+              const SizedBox(height: 4),
+              Text(
+                'Your shipping queue, at a glance',
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: ShipKiaColors.textSecondary(context)),
               ),
             ],
           ),
@@ -168,7 +202,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   controller: _search,
                   hintText: 'Search AWB or delivery phone',
                   prefixIcon: Icons.search,
-                  height: 48,
+                  height: 36,
                   textInputAction: TextInputAction.search,
                   onChanged: _searchChanged,
                   onSubmitted: _submitSearch,
@@ -194,7 +228,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: AppIconButton(
                   icon: Icons.tune,
                   tooltip: 'Filter orders',
-                  size: 48,
+                  size: 36,
                   onPressed: _openFilters,
                 ),
               ),

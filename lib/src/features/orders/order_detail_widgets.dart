@@ -47,18 +47,17 @@ class OrderDetailHeader extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
-              AppIconButton(
-                icon: Icons.copy_outlined,
-                tooltip: 'Copy order ID',
-                size: 24,
-                onPressed: () =>
-                    Clipboard.setData(ClipboardData(text: '${record['id']}')),
-              ),
-              if (record['ecom_order_name'] != null)
-                Text(
-                  '${record['ecom_order_name']}',
-                  style: Theme.of(context).textTheme.labelMedium,
+              if ('${record['id'] ?? ''}'.trim().isNotEmpty)
+                AppIconButton(
+                  icon: Icons.copy_outlined,
+                  tooltip: 'Copy order ID',
+                  size: 20,
+                  iconSize: 13,
+                  onPressed: () =>
+                      Clipboard.setData(ClipboardData(text: '${record['id']}')),
                 ),
+              if (record['ecom_order_name'] != null)
+                OrderEcommerceTag(record: record),
             ],
           ),
           const SizedBox(height: 4),
@@ -278,6 +277,102 @@ class _OrderActivityState extends State<OrderActivity> {
           ),
         );
       },
+    ),
+  );
+}
+
+class OrderDetailToolbar extends StatelessWidget {
+  const OrderDetailToolbar({
+    required this.orderId,
+    required this.record,
+    required this.onBack,
+    required this.onActions,
+    this.canCopy = true,
+    super.key,
+  });
+  final String orderId;
+  final bool canCopy;
+  final Map<String, dynamic>? record;
+  final VoidCallback onBack;
+  final VoidCallback? onActions;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Order Details',
+    header: true,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: Row(
+        children: [
+          AppIconButton(
+            icon: Icons.arrow_back,
+            tooltip: 'Back to orders',
+            size: 30,
+            onPressed: onBack,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        orderId,
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    if (canCopy &&
+                        orderId.trim().isNotEmpty &&
+                        !{'new', 'new order'}.contains(orderId.toLowerCase()))
+                      AppIconButton(
+                        icon: Icons.copy_outlined,
+                        tooltip: 'Copy order ID',
+                        size: 20,
+                        iconSize: 13,
+                        onPressed: () =>
+                            Clipboard.setData(ClipboardData(text: orderId)),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          AppIconButton(
+            icon: Icons.more_horiz,
+            tooltip: 'Order actions',
+            size: 30,
+            onPressed: onActions,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class OrderEcommerceTag extends StatelessWidget {
+  const OrderEcommerceTag({required this.record, super.key});
+  final Map<String, dynamic> record;
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: '${record['ecom_platform'] ?? 'Ecommerce'}',
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.shopping_bag_outlined, size: 14),
+        const SizedBox(width: 3),
+        Flexible(
+          child: Text(
+            '${record['ecom_order_name']}',
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+        ),
+      ],
     ),
   );
 }

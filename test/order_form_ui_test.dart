@@ -1,3 +1,5 @@
+import 'package:shipkia_app/src/features/orders/order_detail_widgets.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -55,6 +57,137 @@ const fields = [
 ];
 
 void main() {
+  testWidgets(
+    'product drawer registers every API field and accepts tax options with max one',
+    (tester) async {
+      final raw = jsonDecode(
+        File('test/fixtures/order_fields.json').readAsStringSync(),
+      );
+      final product = OrderForm.fields(raw)
+          .firstWhere((f) => f['name'] == 'product_details');
+      final schema = const ApiFormAdapter().parse([product], id: 'products');
+      final form = DynamicFormController(schema: schema);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ShipKiaTheme.light,
+          home: Scaffold(
+            body: DynamicFormBuilder(schema: schema, controller: form),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Add row'));
+      await tester.pumpAndSettle();
+      final rowBuilder = tester
+          .widgetList<DynamicFormBuilder>(find.byType(DynamicFormBuilder))
+          .last;
+      final row = rowBuilder.controller;
+      for (final field in row.schema.fields) {
+        expect(field.visible, isTrue, reason: field.id);
+        expect(field.visibleWhen, isNull, reason: field.id);
+      }
+      expect(
+        row.schema.fields.map((f) => f.id),
+        containsAll([
+          'product_name',
+          'hsn_code',
+          'unit_price',
+          'quantity',
+          'product_discount',
+          'tax_rate',
+          'tax_preference',
+        ]),
+      );
+      row.setValue('product_name', 'Test product');
+      row.setValue('unit_price', 100);
+      for (final value in ['Inclusive', 'Exclusive']) {
+        row.setValue('tax_preference', value);
+        expect(row.validate(), isTrue);
+      }
+      row.setValue('tax_preference', 'Invalid');
+      expect(row.validate(), isFalse);
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox.shrink());
+      form.dispose();
+    },
+  );
+
+  testWidgets(
+    'compact header has small copy, no status or ecommerce tags and mobile actions',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = RecordingApiClient((r) async {
+        if (r.path.endsWith('/permissions')) {
+          return {'update': true, 'create': true};
+        }
+        return {
+          'value': {
+            'id': 'ORD-2026-00017',
+            'stage': 'New',
+            'status': 'New',
+            'ecom_platform': 'shopify',
+            'ecom_order_name': '#1025',
+            'is_billing_same': true,
+          },
+          'fields': fields,
+        };
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ShipKiaTheme.light,
+          home: ShipKiaApiScope(
+            apiClient: api,
+            child: const OrderDetailScreen(orderId: 'ORD-2026-00017'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final toolbar = find.byType(OrderDetailToolbar);
+      expect(tester.getSize(toolbar).height, lessThan(80));
+      expect(
+        find.descendant(of: toolbar, matching: find.byTooltip('Copy order ID')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: toolbar, matching: find.text('New')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: toolbar, matching: find.text('#1025')),
+        findsNothing,
+      );
+      await tester.tap(find.byTooltip('Order actions'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppActionSheet), findsOneWidget);
+      for (final label in [
+        'Download Invoice',
+        'Cancel',
+        'Support Tickets',
+        'New',
+        'Refresh order',
+        'Duplicate',
+      ]) {
+        expect(
+          find.descendant(
+            of: find.byType(AppActionSheet),
+            matching: find.text(label),
+          ),
+          findsOneWidget,
+        );
+      }
+      expect(find.textContaining('Shift'), findsNothing);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Keep order'));
+      await tester.pumpAndSettle();
+      expect(api.requests.where((r) => r.method == HttpMethod.delete), isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test(
     'attached API readonly flags are enforced including nested product fields',
     () {
@@ -101,7 +234,9 @@ void main() {
     'bottom buttons switch panels, preserve input and load activity on demand',
     (tester) async {
       final api = RecordingApiClient((r) async {
-        if (r.path.endsWith('/permissions')) return {'update': true};
+        if (r.path.endsWith('/permissions')) {
+          return {'update': true, 'create': true};
+        }
         if (r.path.endsWith('/activity')) return pageFixture([]);
         return {
           'value': {
@@ -264,8 +399,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Choose Product Name'));
-      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Test');
+      await tester.pumpAndSettle(const Duration(milliseconds: 350));
+      expect(api.requests.last.params?['search'], 'Test');
       await tester.tap(find.text('Test product'));
       await tester.pumpAndSettle();
       expect(form.values['product_name'], 'PRODUCT-1');
@@ -359,7 +495,9 @@ void main() {
         'total_order_value': 10000,
       };
       final api = RecordingApiClient((request) async {
-        if (request.path.endsWith('/permissions')) return {'update': true};
+        if (request.path.endsWith('/permissions')) {
+          return {'update': true, 'create': true};
+        }
         if (request.method == HttpMethod.patch) {
           if (fail) throw const FormatException('Update failed');
           values.addAll(Map<String, dynamic>.from(request.data as Map));
@@ -385,14 +523,18 @@ void main() {
         matching: find.byType(TextField),
       );
       await tester.enterText(name, 'Updated customer');
-      await tester.tap(find.text('Update').first);
+      await tester.tap(find.byTooltip('Order actions'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Update').last);
       await tester.pumpAndSettle();
       expect(api.requests.last.data, {
         'delivery_full_name': 'Updated customer',
       });
       expect(find.text('Updated customer'), findsOneWidget);
       fail = false;
-      await tester.tap(find.text('Update').first);
+      await tester.tap(find.byTooltip('Order actions'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Update').last);
       await tester.pumpAndSettle();
       expect(values['delivery_full_name'], 'Updated customer');
       expect(find.text('Order updated'), findsOneWidget);

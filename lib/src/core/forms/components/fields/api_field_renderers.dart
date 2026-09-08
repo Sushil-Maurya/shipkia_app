@@ -8,7 +8,6 @@ import '../../../api/api.dart';
 import '../../../api/record_page.dart';
 import '../../../state/paginated_controller.dart';
 import '../../../../design_system/design_system.dart';
-import '../../../../design_system/app_paginated_list.dart';
 import '../../forms.dart';
 
 class UnsupportedApiFieldRenderer implements DynamicFieldRenderer {
@@ -33,202 +32,8 @@ class LinkApiFieldRenderer implements DynamicFieldRenderer {
   const LinkApiFieldRenderer({this.allowFreeText = false});
   final bool allowFreeText;
   @override
-  Widget build(DynamicFieldContext c) => AppTextField(
-    label: c.isRequired ? '${c.field.label} *' : c.field.label,
-    initialValue: c.value?.toString() ?? '',
-    readOnly: !allowFreeText || !c.canEdit,
-    onChanged: allowFreeText && c.canEdit ? c.onChanged : null,
-    errorText: c.errorText,
-    suffix: IconButton(
-      tooltip: 'Choose ${c.field.label}',
-      icon: const Icon(Icons.search),
-      onPressed: !c.canEdit
-          ? null
-          : () async {
-              final value = await showModalBottomSheet<Object?>(
-                context: c.buildContext,
-                isScrollControlled: true,
-                useSafeArea: true,
-                builder: (_) => FractionallySizedBox(
-                  heightFactor: .85,
-                  child: _LinkPicker(
-                    field: c.field,
-                    api: ShipKiaApiScope.maybeOf(c.buildContext),
-                  ),
-                ),
-              );
-              if (value == null || !c.buildContext.mounted) return;
-              c.onChanged(value);
-              final mapping = c.field.metadata['display'];
-              final type = c.field.metadata['object_type'];
-              if (mapping is! Map || type == null) return;
-              c.controller.setExternalError(
-                c.field.id,
-                'Loading linked record...',
-              );
-              try {
-                final data = await ShipKiaApiScope.maybeOf(c.buildContext)!
-                    .request<Object?>(
-                      ApiRequestConfig(
-                        method: HttpMethod.get,
-                        path:
-                            '/oms/${Uri.encodeComponent('$type')}/records/${Uri.encodeComponent('$value')}',
-                        showErrorMessage: false,
-                      ),
-                    );
-                if (!c.buildContext.mounted ||
-                    c.controller.values[c.field.id] != value) {
-                  return;
-                }
-                final raw = data is Map ? data['value'] ?? data : null;
-                if (raw is! Map) {
-                  throw const FormatException('Linked record unavailable.');
-                }
-                for (final entry in mapping.entries) {
-                  final target = c.controller.schema.fields
-                      .where((f) => f.id == '${entry.value}')
-                      .firstOrNull;
-                  if (target == null) continue;
-                  final converted = const ApiFormAdapter()
-                      .field(
-                        Map<String, dynamic>.from(target.metadata),
-                        values: {target.id: raw[entry.key]},
-                      )
-                      .initialValue;
-                  c.controller.setValue(target.id, converted);
-                }
-                c.controller.setExternalError(c.field.id, null);
-              } catch (_) {
-                if (c.buildContext.mounted &&
-                    c.controller.values[c.field.id] == value) {
-                  c.controller.setExternalError(
-                    c.field.id,
-                    'Unable to load linked details. Choose the record again.',
-                  );
-                }
-              }
-            },
-    ),
-  );
-}
-
-class _LinkPicker extends StatefulWidget {
-  const _LinkPicker({required this.field, required this.api});
-  final DynamicFieldSchema<Object?> field;
-  final ApiClient? api;
-  @override
-  State<_LinkPicker> createState() => _LinkPickerState();
-}
-
-class _LinkPickerState extends State<_LinkPicker> {
-  final controller = PaginatedController<Map<String, dynamic>>(
-    recordKey: (r) => '${r['id'] ?? r['record_id'] ?? r['value'] ?? r['name']}',
-  );
-  Timer? timer;
-  @override
-  void initState() {
-    super.initState();
-    load('');
-  }
-
-  void load(String search) {
-    controller.setQuery((page, rows, token) async {
-      final type =
-          widget.field.metadata['object_type'] ??
-          widget.field.metadata['objectType'];
-      if (type == null || widget.api == null) {
-        throw StateError('Options are unavailable.');
-      }
-      final data = await widget.api!.request<Object?>(
-        ApiRequestConfig(
-          method: HttpMethod.get,
-          path: type == 'roles'
-              ? '/auth/users/roles'
-              : '/oms/${Uri.encodeComponent('$type')}/options',
-          params: {
-            'page': page,
-            'rows': rows,
-            'search': search,
-            if (widget.field.metadata['src_obj'] != null)
-              'src_obj': widget.field.metadata['src_obj'],
-            if (widget.field.metadata['view'] != null)
-              'view': widget.field.metadata['view'],
-          },
-          cancelToken: token,
-          showErrorMessage: false,
-        ),
-      );
-      if (type == 'roles' && data is List) {
-        final matches = data
-            .where((r) => '$r'.toLowerCase().contains(search.toLowerCase()))
-            .map((r) => <String, dynamic>{'id': r, 'label': r})
-            .toList();
-        return RecordPage(records: matches, totalPages: 1);
-      }
-      return RecordPage.fromJson(data, (row) {
-        if ([
-          row['id'],
-          row['record_id'],
-          row['value'],
-          row['name'],
-        ].every((v) => v == null)) {
-          throw const FormatException('Option is missing its identity.');
-        }
-        return row;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      ListTile(
-        title: Text('Choose ${widget.field.label}'),
-        trailing: IconButton(
-          tooltip: 'Close',
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(16),
-        child: TextField(
-          decoration: const InputDecoration(
-            labelText: 'Search',
-            prefixIcon: Icon(Icons.search),
-          ),
-          onChanged: (v) {
-            timer?.cancel();
-            timer = Timer(const Duration(milliseconds: 350), () => load(v));
-          },
-        ),
-      ),
-      Expanded(
-        child: AppPaginatedList<Map<String, dynamic>>(
-          controller: controller,
-          emptyTitle: 'No matching options',
-          emptyMessage: 'Try another search.',
-          itemBuilder: (context, row) {
-            final id =
-                row['id'] ?? row['record_id'] ?? row['value'] ?? row['name'];
-            return ListTile(
-              title: Text('${row['label'] ?? row['name'] ?? id}'),
-              subtitle: Text('${row['description'] ?? id}'),
-              enabled: row['disabled'] != true,
-              onTap: () => Navigator.pop(context, id),
-            );
-          },
-        ),
-      ),
-    ],
-  );
+  Widget build(DynamicFieldContext c) =>
+      ApiOptionsField(context: c, allowFreeText: allowFreeText);
 }
 
 class PostalApiFieldRenderer implements DynamicFieldRenderer {
@@ -437,9 +242,20 @@ class GridApiFieldRenderer implements DynamicFieldRenderer {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text(
-                  c.field.label,
-                  style: Theme.of(context).textTheme.titleLarge,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        c.field.label,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                    AppIconButton(
+                      icon: Icons.close,
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 DynamicFormBuilder(
@@ -449,21 +265,20 @@ class GridApiFieldRenderer implements DynamicFieldRenderer {
                   maxColumns: 1,
                 ),
                 if (c.canEdit)
-                  AppButton(
-                    label: 'Done',
-                    onPressed: () {
-                      if (key.currentState!.validateAndFocusFirstError()) {
-                        Navigator.pop(
-                          context,
-                          adapter.serialize(schema, controller.values),
-                        );
-                      }
-                    },
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: AppButton(
+                      label: 'Done',
+                      onPressed: () {
+                        if (key.currentState!.validateAndFocusFirstError()) {
+                          Navigator.pop(
+                            context,
+                            adapter.serialize(schema, controller.values),
+                          );
+                        }
+                      },
+                    ),
                   ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
               ],
             ),
           ),
@@ -552,6 +367,291 @@ class GridApiFieldRenderer implements DynamicFieldRenderer {
             style: TextStyle(color: Theme.of(c.buildContext).colorScheme.error),
           ),
       ],
+    );
+  }
+}
+
+class ApiOptionsField extends StatefulWidget {
+  const ApiOptionsField({
+    required this.context,
+    this.allowFreeText = false,
+    super.key,
+  });
+  final bool allowFreeText;
+  final DynamicFieldContext context;
+  @override
+  State<ApiOptionsField> createState() => _ApiOptionsFieldState();
+}
+
+class _ApiOptionsFieldState extends State<ApiOptionsField> {
+  late final TextEditingController text;
+  final focus = FocusNode();
+  final options = PaginatedController<Map<String, dynamic>>(
+    recordKey: (r) => '${r['id'] ?? r['value'] ?? r['name']}',
+    pageSize: 15,
+  );
+  Timer? timer;
+  bool open = false;
+  @override
+  void initState() {
+    super.initState();
+    text = TextEditingController(text: labelFor(widget.context.value));
+  }
+
+  @override
+  void didUpdateWidget(covariant ApiOptionsField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.context.value != widget.context.value && !focus.hasFocus) {
+      text.text = labelFor(widget.context.value);
+    }
+  }
+
+  String labelFor(Object? value) =>
+      widget.context.field.options
+          .where((o) => o.value == value)
+          .firstOrNull
+          ?.label ??
+      '${value ?? ''}';
+
+  Future<void> select(Map<String, dynamic> row) async {
+    final c = widget.context;
+    final value = row['id'] ?? row['record_id'] ?? row['value'] ?? row['name'];
+    if (value == null) return;
+    timer?.cancel();
+    c.onChanged(value);
+    c.controller.setExternalError(c.field.id, null);
+    text.text = '${row['label'] ?? value}';
+    focus.unfocus();
+    setState(() => open = false);
+    final mapping = c.field.metadata['display'];
+    final type = c.field.metadata['object_type'];
+    if (mapping is! Map || type == null) return;
+    c.controller.setExternalError(c.field.id, 'Loading linked record...');
+    try {
+      final data = mapping.keys.every(row.containsKey)
+          ? row
+          : await ShipKiaApiScope.maybeOf(c.buildContext)!.request<Object?>(
+              ApiRequestConfig(
+                method: HttpMethod.get,
+                path:
+                    '/oms/${Uri.encodeComponent('$type')}/records/${Uri.encodeComponent('$value')}',
+                showErrorMessage: false,
+              ),
+            );
+      if (!c.buildContext.mounted || c.controller.values[c.field.id] != value) {
+        return;
+      }
+      final raw = data is Map ? data['value'] ?? data : null;
+      if (raw is! Map) {
+        throw const FormatException('Linked record unavailable.');
+      }
+      for (final entry in mapping.entries) {
+        final target = c.controller.schema.fields
+            .where((f) => f.id == '${entry.value}')
+            .firstOrNull;
+        if (target == null) continue;
+        final converted = const ApiFormAdapter()
+            .field(
+              Map<String, dynamic>.from(target.metadata),
+              values: {target.id: raw[entry.key]},
+            )
+            .initialValue;
+        c.controller.setValue(target.id, converted);
+      }
+      c.controller.setExternalError(c.field.id, null);
+    } catch (_) {
+      if (c.buildContext.mounted && c.controller.values[c.field.id] == value) {
+        c.controller.setExternalError(
+          c.field.id,
+          'Unable to load linked details. Choose the record again.',
+        );
+      }
+    }
+  }
+
+  void search(String value) {
+    setState(() => open = true);
+    options.setQuery((page, rows, token) async {
+      final field = widget.context.field;
+      final type =
+          field.metadata['object_type'] ?? field.metadata['objectType'];
+      if (field.options.isNotEmpty || type == null) {
+        return RecordPage(
+          records: [
+            for (final option in field.options)
+              if (option.label.toLowerCase().contains(value.toLowerCase()))
+                <String, dynamic>{
+                  'id': option.value,
+                  'label': option.label,
+                  'disabled': !option.enabled,
+                },
+          ],
+          totalPages: 1,
+        );
+      }
+      final api = ShipKiaApiScope.maybeOf(context);
+      if (api == null) throw StateError('Connection unavailable');
+      final result = await api.request<Object?>(
+        ApiRequestConfig(
+          method: HttpMethod.get,
+          path: type == 'roles'
+              ? '/auth/users/roles'
+              : '/oms/${Uri.encodeComponent('$type')}/options',
+          params: {
+            'page': page,
+            'rows': rows,
+            'search': value,
+            if (field.metadata['src_obj'] != null)
+              'src_obj': field.metadata['src_obj'],
+            if (field.metadata['view'] != null) 'view': field.metadata['view'],
+          },
+          cancelToken: token,
+          showErrorMessage: false,
+        ),
+      );
+      if (result is List) {
+        return RecordPage(
+          records: [
+            for (final row in result)
+              if ('$row'.toLowerCase().contains(value.toLowerCase()))
+                row is Map
+                    ? Map<String, dynamic>.from(row)
+                    : <String, dynamic>{'id': row, 'label': '$row'},
+          ],
+          totalPages: 1,
+        );
+      }
+      return RecordPage.fromJson(result, (r) => r);
+    });
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    text.dispose();
+    focus.dispose();
+    options.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.context;
+    return TextFieldTapRegion(
+      onTapOutside: (_) {
+        timer?.cancel();
+        focus.unfocus();
+        setState(() => open = false);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+            controller: text,
+            focusNode: focus,
+            readOnly: !c.canEdit,
+            decoration: InputDecoration(
+              labelText: '${c.field.label}${c.isRequired ? ' *' : ''}',
+              hintText: 'Search ${c.field.label.toLowerCase()}',
+              errorText: c.errorText,
+              suffixIcon: IconButton(
+                tooltip: text.text.isEmpty
+                    ? 'Choose ${c.field.label}'
+                    : 'Clear ${c.field.label}',
+                icon: Icon(text.text.isEmpty ? Icons.search : Icons.close),
+                onPressed: !c.canEdit
+                    ? null
+                    : () {
+                        timer?.cancel();
+                        if (text.text.isNotEmpty) {
+                          text.clear();
+                          c.onChanged(null);
+                          c.controller.setExternalError(c.field.id, null);
+                          setState(() => open = false);
+                        } else {
+                          focus.requestFocus();
+                          search('');
+                        }
+                      },
+              ),
+            ),
+            onTap: c.canEdit ? () => search('') : null,
+            onChanged: !c.canEdit
+                ? null
+                : (value) {
+                    setState(() => open = false);
+                    c.onChanged(widget.allowFreeText ? value : null);
+                    c.controller.setExternalError(
+                      c.field.id,
+                      widget.allowFreeText
+                          ? null
+                          : 'Choose ${c.field.label.toLowerCase()} from the results.',
+                    );
+                    timer?.cancel();
+                    timer = Timer(
+                      const Duration(milliseconds: 300),
+                      () => search(value),
+                    );
+                  },
+          ),
+          if (open && c.canEdit)
+            ListenableBuilder(
+              listenable: options,
+              builder: (context, _) => Container(
+                constraints: const BoxConstraints(maxHeight: 230),
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  children: [
+                    if (options.loading) const LinearProgressIndicator(),
+                    if (options.error != null)
+                      ListTile(
+                        title: Text(options.error!.message),
+                        trailing: TextButton(
+                          onPressed: options.retry,
+                          child: const Text('Retry'),
+                        ),
+                      ),
+                    if (!options.loading &&
+                        options.error == null &&
+                        options.records.isEmpty)
+                      const ListTile(title: Text('No matching options')),
+                    for (final (index, row) in options.records.indexed)
+                      Material(
+                        color: index.isEven
+                            ? Theme.of(context).colorScheme.surface
+                            : Theme.of(context).colorScheme.surfaceContainerLow,
+                        child: ListTile(
+                          dense: true,
+                          title: Text(
+                            '${row['label'] ?? row['name'] ?? row['id']}',
+                          ),
+                          subtitle: row['description'] == null
+                              ? null
+                              : Text('${row['description']}'),
+                          enabled: row['disabled'] != true,
+                          onTap: () => select(row),
+                        ),
+                      ),
+                    if (options.hasMore)
+                      TextButton(
+                        onPressed: options.loadingMore
+                            ? null
+                            : options.loadMore,
+                        child: const Text('More options'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

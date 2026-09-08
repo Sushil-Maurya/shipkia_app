@@ -108,3 +108,57 @@ The supplied mobile image and API field response now drive the detail presentati
 Login, logout and shared authentication actions have their previous full width and 40-pixel minimum height restored. Other app controls retain content sizing.
 
 Verification for this layout follow-up: all 106 tests passed, Flutter analysis found no issues, and the Android debug APK built successfully. Temporary check logs were removed. Device-level visual verification and an iOS build were not performed.
+
+## Compact order header and actions
+
+Replaced the nested order AppBar with a content-sized toolbar and removed the already-consumed top inset below the app shell. Copy sits immediately beside the order ID; stage/status and ecommerce order references wrap when needed, with actions at the right edge. The shipment header retains the same ecommerce reference. Material icon buttons now honor their requested size without default extra padding.
+
+The mobile bottom sheet has no desktop shortcut hints. Update, Refresh, Support Tickets navigation and stage-eligible cancellation with confirmation are connected. Download Invoice, New and Duplicate are explicitly disabled with a mobile-availability label until their native workflows are implemented. Cancellation uses the web DELETE `/oms/shipping/order` contract with `order_id`; no live order was cancelled during development.
+
+Header/action verification: 108 tests passed, Flutter analysis is clean, and the Android debug APK rebuilt successfully. Temporary check logs were cleaned. The top-inset and header sizing checks run in widget tests; no physical-device or iOS build verification was performed.
+
+
+## Order actions, autocomplete and compact listings (September 8)
+
+This follow-up supersedes the earlier notes about disabled invoice, New and Duplicate actions and tags in the detail toolbar. The toolbar now contains back, order ID with a 20-pixel copy button (13-pixel icon), and the actions menu. Status/stage and ecommerce references are omitted from the toolbar; the shipment header retains its ecommerce reference. Order card stage badges align to the right content edge. Shared icon actions default to 30 pixels, including listing refresh/filter/clear controls. Create Order appears below the orders heading, opens the registered API form, enforces create permission in that form, and refreshes the queue after successful creation. Authentication buttons retain full width.
+
+Revisited the React sources and the local web order detail at a 390 x 844 mobile viewport. Pickup address fields now search the API options endpoint with debounce, pagination, loading/retry and explicit selection; arbitrary text cannot be saved as an address ID, and API readonly metadata disables editing.
+
+The order action sheet connects creation and duplication to POST `/oms/orders/records`, excluding source identity and shipping metadata when duplicating. Invoice/label downloads request the web document endpoints and validate PDF bytes before opening Android's save picker or the iOS share sheet. Ship Now loads live courier quotes and creates the shipment, followed by pickup scheduling where required. Scheduling follows the pickup address's operating days and same-day closing time. Support Tickets lists tickets filtered to this order and provides a registered form for raising a ticket. Refresh, Update and stage-eligible cancellation remain connected. Desktop keyboard shortcuts are omitted.
+
+Validation: 115 tests passed and Flutter analysis reported no issues. Tests cover listing control sizes, right-aligned badges, narrow layouts with enlarged text, create-and-refresh navigation, document payloads, shipment/scheduling contracts, duplication exclusions, pickup selection validation and existing readonly behavior. No live business records were created, shipped, cancelled or modified during verification. iOS compilation and physical-device PDF picker behavior have not been verified on this Windows machine. Support-ticket attachment upload and remaining earlier parity gaps (such as automatic dimensions and country-code selectors) are still outstanding; this does not establish whole-app parity.
+
+Android debug APK rebuilt successfully after this follow-up. Temporary verification logs were removed; production assets, regression tests and the APK were retained.
+
+
+## Listing alignment and form interaction follow-up
+
+Create Order now sits immediately to the right of Reload in a right-aligned action row. The search field and filter button are both 36 pixels high and vertically centered. The action row remains separate from the title for narrow screens and enlarged text.
+
+Registered phone fields show India's flag and +91 prefix, matching the React PhoneInput default. The prefix is separate from the editable number; existing +91-prefixed values display without duplicating the code. Shared Material/Cupertino text inputs explicitly dismiss focus on outside taps. Pickup autocomplete groups its input and suggestions so selection still works; outside taps close the dropdown and keyboard, the dropdown has no Close button, and the input's cross clears its value and cancels pending searches. Readonly behavior remains enforced. New orders and empty order identities do not show copy controls.
+
+Verification: Flutter analysis reported no issues. The regression run passed 115 tests; its single failing phone accessibility assertion was corrected for Flutter's merged semantics, and all seven order-action tests then passed, including phone keyboard dismissal, autocomplete clearing/outside dismissal and the new-order copy guard. Listing tests verify action ordering and matching search/filter geometry, including narrow layouts. Android debug APK rebuilt successfully. Task logs were removed after verification. Physical-device and iOS build verification remain outstanding.
+
+
+## Reusable dropdowns and product editor follow-up
+
+Select fields and linked-record fields now share `ApiOptionsField`. Suggestions use the input's available width, local registered options when present, or paginated API options for the registered object type. The component supports typed search, clearing, disabled options, readonly fields, retry, additional pages and outside-tap dismissal. The old separate linked-record picker was removed.
+
+Product name now uses this autocomplete directly inside the row editor. Selecting an option fills the registered display mapping from option data when provided, otherwise from the linked record endpoint, preserving field-specific storage/display unit conversion. Free-text product names remain supported as in the previous renderer. Product row editing has a top-right Close icon and right-aligned Done button; the bottom Close text action was removed. Unit suffixes size to their content at the right edge and center vertically in the field.
+
+Regression coverage includes local options without API calls, dropdown/input width agreement, unit suffix position, typed product search and mapped price/tax values, and the product editor's close/Done placement and saved row. Physical-device and iOS build checks remain outstanding.
+
+Final verification: all 118 tests passed, Flutter analysis found no issues, and the Android debug APK rebuilt successfully. Temporary task logs were removed.
+
+Orders heading placement correction: Reload and Create Order now share the Orders heading row, in the right-hand area, with Create Order after Reload. The subtitle remains below the heading. Narrow-screen and enlarged-text layout checks cover this placement.
+Verification: all 7 Orders tests passed, analysis reported no issues, and the Android debug APK rebuilt successfully. Temporary logs were cleaned.
+
+
+## Product row field registration and tax option validation
+
+Product grid children retain the API's registered fields without the order header's empty-readonly-field suppression. HSN Code and Tax Rate therefore remain visible in a new product drawer, retaining readonly access until autocomplete fills them. Explicit API visibility settings remain respected.
+
+Single-select and radio options no longer interpret API min/max metadata as character limits. TAX Preference's max: 1 no longer rejects Inclusive or Exclusive; required and allowed-option validation still applies. Shared suggestions have an 8-pixel rounded, clipped border and alternate surface colors per row, with Material tap feedback preserved.
+
+Verification: all 119 regression tests passed, including a fixture-based test checking all seven product fields, readonly field visibility and valid/invalid tax selections. Flutter analysis reported no issues. Physical-device and iOS checks remain outstanding.
+Android debug APK rebuilt successfully. Temporary verification logs were removed after completion.

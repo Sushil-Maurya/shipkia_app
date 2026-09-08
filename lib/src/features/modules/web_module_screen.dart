@@ -231,9 +231,9 @@ class _ModuleListState extends State<_ModuleList> {
             decoration: InputDecoration(
               hintText: 'Search ${widget.route.label.toLowerCase()}',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
+              suffixIcon: AppIconButton(
                 tooltip: 'Clear search',
-                icon: const Icon(Icons.close),
+                icon: Icons.close,
                 onPressed: () {
                   search.clear();
                   debounce?.cancel();
@@ -303,10 +303,10 @@ class _ModuleListState extends State<_ModuleList> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-                IconButton(
+                AppIconButton(
                   tooltip: 'Refresh',
                   onPressed: controller.refresh,
-                  icon: const Icon(Icons.refresh),
+                  icon: Icons.refresh,
                 ),
               ],
             ),

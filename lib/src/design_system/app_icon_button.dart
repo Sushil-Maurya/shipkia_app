@@ -11,7 +11,8 @@ class AppIconButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.filled = false,
-    this.size = 34,
+    this.size = 30,
+    this.iconSize = 18,
     super.key,
   });
 
@@ -20,6 +21,7 @@ class AppIconButton extends StatelessWidget {
   final String? tooltip;
   final bool filled;
   final double size;
+  final double iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -37,16 +39,20 @@ class AppIconButton extends StatelessWidget {
         borderRadius: ShipKiaRadius.mdBorder,
         color: background,
         onPressed: onPressed,
-        child: Icon(icon, size: 18, color: foreground),
+        child: Icon(icon, size: iconSize, color: foreground),
       );
     }
 
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: iconSize),
       tooltip: tooltip,
       style: IconButton.styleFrom(
         fixedSize: Size(size, size),
+        minimumSize: Size(size, size),
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.standard,
         backgroundColor: background,
         foregroundColor: foreground,
         shape: RoundedRectangleBorder(borderRadius: ShipKiaRadius.mdBorder),

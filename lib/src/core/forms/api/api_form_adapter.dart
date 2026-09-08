@@ -187,7 +187,10 @@ class ApiFormAdapter {
                 ? null
                 : '$label must be a whole number.',
           ),
-        if (!numeric && type != DynamicFieldType.grid) ...[
+        if (!numeric &&
+            type != DynamicFieldType.grid &&
+            type != DynamicFieldType.select &&
+            type != DynamicFieldType.radio) ...[
           if (min != null) MinLengthRule(min.toInt()),
           if (max != null) MaxLengthRule(max.toInt()),
         ],

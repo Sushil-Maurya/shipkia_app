@@ -12,7 +12,68 @@ import 'package:shipkia_app/src/theme/shipkia_theme.dart';
 
 import 'support/recording_api_client.dart';
 
+import 'package:shipkia_app/src/widgets/shipkia_widgets.dart';
+
 void main() {
+  testWidgets('compact list actions create an order and refresh the queue', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var lists = 0;
+    final api = RecordingApiClient((r) async {
+      if (r.path.endsWith('/permissions')) return {'create': true};
+      if (r.path.endsWith('/fields')) {
+        return [
+          {
+            'name': 'delivery_full_name',
+            'label': 'Delivery Full Name',
+            'type': 'text',
+            'required': true,
+          },
+        ];
+      }
+      if (r.path.endsWith('/list')) {
+        lists++;
+        return pageFixture([orderFixture('ORDER-1', stage: 'New')]);
+      }
+      return {
+        'value': {'id': 'CREATED'},
+      };
+    });
+    await tester.pumpWidget(_app(api));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getSize(find.byTooltip('Refresh orders')),
+      const Size(30, 30),
+    );
+    expect(tester.getSize(find.byTooltip('Filter orders')), const Size(36, 36));
+    final reload = tester.getRect(find.byTooltip('Refresh orders'));
+    final create = tester.getRect(find.text('Create Order'));
+    final heading = tester.getRect(find.text('Orders'));
+    expect(reload.left, greaterThan(heading.right));
+    expect(reload.center.dy, closeTo(heading.center.dy, 1));
+    expect(create.left, greaterThan(reload.right));
+    expect(create.center.dy, closeTo(reload.center.dy, 1));
+    final search = tester.getRect(find.byType(TextField));
+    final filter = tester.getRect(find.byTooltip('Filter orders'));
+    expect(search.height, filter.height);
+    expect(search.center.dy, filter.center.dy);
+    final card = tester.getRect(find.byType(SkOrderRow));
+    final badge = tester.getRect(find.byType(SkStatusBadge));
+    expect(card.right - badge.right, closeTo(29, 1));
+    await tester.tap(find.text('Create Order'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Customer');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    expect(find.byType(OrdersScreen), findsOneWidget);
+    expect(lists, 2);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'API failures show retry instead of sample orders; retry can resolve to empty',
     (tester) async {
@@ -173,9 +234,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Order Details'), findsOneWidget);
+      expect(find.byTooltip('Order actions'), findsOneWidget);
       expect(find.text('Shipping label downloaded.'), findsNothing);
       fail = true;
+      await tester.tap(find.byTooltip('Order actions'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Refresh order'));
       await tester.pumpAndSettle();
       expect(find.text('Refresh failed'), findsOneWidget);

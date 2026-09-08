@@ -13,6 +13,7 @@ class AppTextField extends StatefulWidget {
     this.label,
     this.hintText,
     this.prefixIcon,
+    this.prefix,
     this.suffix,
     this.keyboardType,
     this.obscureText = false,
@@ -38,6 +39,7 @@ class AppTextField extends StatefulWidget {
   final String? label;
   final String? hintText;
   final IconData? prefixIcon;
+  final Widget? prefix;
   final Widget? suffix;
   final TextInputType? keyboardType;
   final bool obscureText;
@@ -103,6 +105,8 @@ class _AppTextFieldState extends State<AppTextField> {
       child: AppPlatform.isCupertino
           ? CupertinoTextField(
               controller: controller,
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
               placeholder: widget.hintText,
               keyboardType: widget.keyboardType,
               obscureText: widget.obscureText,
@@ -116,16 +120,18 @@ class _AppTextFieldState extends State<AppTextField> {
               onSubmitted: widget.onSubmitted,
               textInputAction: widget.textInputAction,
               inputFormatters: widget.inputFormatters,
-              prefix: widget.prefixIcon == null
-                  ? null
-                  : Padding(
-                      padding: const EdgeInsets.only(left: 10),
-                      child: Icon(
-                        widget.prefixIcon,
-                        size: 18,
-                        color: ShipKiaColors.mutedInk,
-                      ),
-                    ),
+              prefix:
+                  widget.prefix ??
+                  (widget.prefixIcon == null
+                      ? null
+                      : Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Icon(
+                            widget.prefixIcon,
+                            size: 18,
+                            color: ShipKiaColors.mutedInk,
+                          ),
+                        )),
               suffix: widget.suffix == null
                   ? null
                   : Padding(
@@ -145,6 +151,8 @@ class _AppTextFieldState extends State<AppTextField> {
             )
           : TextField(
               controller: controller,
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
               keyboardType: widget.keyboardType,
               obscureText: widget.obscureText,
               autofillHints: widget.autofillHints,
@@ -166,9 +174,11 @@ class _AppTextFieldState extends State<AppTextField> {
                 fillColor: widget.enabled
                     ? ShipKiaColors.surfaceMuted(context)
                     : _disabledFill(context),
-                prefixIcon: widget.prefixIcon == null
-                    ? null
-                    : Icon(widget.prefixIcon, size: 18),
+                prefixIcon:
+                    widget.prefix ??
+                    (widget.prefixIcon == null
+                        ? null
+                        : Icon(widget.prefixIcon, size: 18)),
                 suffixIcon: widget.suffix,
               ),
             ),

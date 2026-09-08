@@ -1,3 +1,5 @@
+import 'package:shipkia_app/src/widgets/shipkia_shell_widgets.dart';
+import 'package:shipkia_app/src/features/orders/order_detail_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:shipkia_app/src/core/api/api_scope.dart';
 
@@ -11,6 +13,22 @@ import 'package:shipkia_app/src/features/auth/login_screen.dart';
 import 'package:shipkia_app/src/theme/shipkia_theme.dart';
 
 void main() {
+  testWidgets('nested detail consumes the system top inset only once', (
+    tester,
+  ) async {
+    tester.view.padding = const FakeViewPadding(top: 24);
+    addTearDown(tester.view.resetPadding);
+    final auth = _auth(ShipKiaAuthStatus.authenticated);
+    await tester.pumpWidget(
+      _routerApp(auth, initialLocation: '/orders/ORD-10491'),
+    );
+    await tester.pumpAndSettle();
+    final shell = tester.getRect(find.byType(ShipKiaTopBar));
+    final detail = tester.getRect(find.byType(OrderDetailToolbar));
+    expect(detail.top - shell.bottom, closeTo(0, .1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('unauthenticated users land on login', (tester) async {
     final auth = _auth(ShipKiaAuthStatus.unauthenticated);
     await tester.pumpWidget(_routerApp(auth));
@@ -62,7 +80,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ORD-10491'), findsWidgets);
-    expect(find.text('Order Details'), findsOneWidget);
+    expect(find.byTooltip('Order actions'), findsOneWidget);
   });
 
   testWidgets('order detail preserves percent characters in backend identity', (
@@ -73,7 +91,7 @@ void main() {
       _routerApp(auth, initialLocation: '/orders/ORDER%2542'),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Order Details'), findsOneWidget);
+    expect(find.byTooltip('Order actions'), findsOneWidget);
     expect(find.text('ORDER%42'), findsWidgets);
   });
 
@@ -160,7 +178,7 @@ void main() {
 
     await tester.tap(find.text('ORD-10491'));
     await tester.pumpAndSettle();
-    expect(find.text('Order Details'), findsOneWidget);
+    expect(find.byTooltip('Order actions'), findsOneWidget);
 
     await tester.tap(find.text('Wallet').last);
     await tester.pumpAndSettle();
@@ -168,7 +186,7 @@ void main() {
 
     await tester.tap(find.text('Orders').last);
     await tester.pumpAndSettle();
-    expect(find.text('Order Details'), findsOneWidget);
+    expect(find.byTooltip('Order actions'), findsOneWidget);
   });
 }
 

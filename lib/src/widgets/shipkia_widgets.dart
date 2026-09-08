@@ -314,9 +314,12 @@ class SkOrderRow extends StatelessWidget {
                                   ),
                                 ),
                                 Flexible(
-                                  child: SkStatusBadge(
-                                    status: order.status,
-                                    label: order.stageLabel,
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: SkStatusBadge(
+                                      status: order.status,
+                                      label: order.stageLabel,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -350,7 +353,7 @@ class SkOrderRow extends StatelessWidget {
                         icon: Icons.chevron_right,
                         onPressed: onTap,
                         tooltip: 'View order details',
-                        size: 44,
+                        size: 30,
                       ),
                     ],
                   ),
